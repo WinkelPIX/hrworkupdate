@@ -1,0 +1,60 @@
+// Run this script to seed MongoDB with enhanced data including all new fields
+
+const seedData = {
+  tasks: [
+    {
+      id: "task1",
+      clientName: "Acme Corp",
+      projectName: "Website Redesign",
+      designerName: "John Smith",
+      employeeId: "emp1",
+      workGivenDate: new Date("2024-01-10"),
+      dueDate: new Date("2024-01-25"),
+      workDoneDate: new Date("2024-01-23"),
+      taskStatus: "Completed",
+      paymentReceived: true,
+      paymentAmount: "5000",
+      gstApplied: true,
+      sentToCA: true,
+      caPaymentDone: true,
+      folderPath: "/projects/acme/website_redesign_v2",
+    },
+    {
+      id: "task2",
+      clientName: "Tech Solutions",
+      projectName: "Mobile App UI",
+      designerName: "Jane Doe",
+      employeeId: "emp2",
+      workGivenDate: new Date("2024-02-05"),
+      dueDate: new Date("2024-02-20"),
+      workDoneDate: null,
+      taskStatus: "In Progress",
+      paymentReceived: false,
+      paymentAmount: "7500",
+      gstApplied: false,
+      sentToCA: false,
+      caPaymentDone: false,
+      folderPath: "/projects/tech_solutions/mobile_app",
+    },
+    {
+      id: "task3",
+      clientName: "Global Brands",
+      projectName: "Logo Design",
+      designerName: "Mike Johnson",
+      employeeId: "emp3",
+      workGivenDate: new Date("2024-02-01"),
+      dueDate: new Date("2024-02-10"),
+      workDoneDate: null,
+      taskStatus: "Pending",
+      paymentReceived: false,
+      paymentAmount: "2000",
+      gstApplied: true,
+      sentToCA: false,
+      caPaymentDone: false,
+      folderPath: null,
+    },
+  ],
+}
+
+console.log("[v0] Enhanced seed data prepared for MongoDB")
+console.log(JSON.stringify(seedData, null, 2))
