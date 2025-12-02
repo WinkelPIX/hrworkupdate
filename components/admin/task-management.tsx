@@ -273,7 +273,7 @@ const handleGenerateInvoice = async () => {
               >
                 <option value="">Select Employee *</option>
                 {employees.map((emp: any) => (
-                  <option key={emp._id} value={emp._id}>
+                  <option key={emp.username} value={emp.username}>
                     {emp.username}
                   </option>
                 ))}
