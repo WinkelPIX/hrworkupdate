@@ -6,19 +6,19 @@ import AdminHeader from "@/components/admin/admin-header"
 import TaskManagement from "@/components/admin/task-management"
 import AnalyticsDashboard from "@/components/admin/analytics-dashboard"
 import EmployeeManagement from "@/components/admin/employee-management"
-// New Import
+import AccountsManagement from "@/components/admin/accounts-management"
 import InvoiceManagement from "@/components/admin/invoice-management"
 
 export default function AdminDashboard({ user, setUser }: any) {
   // Added "invoices" to potential tabs
   const [activeTab, setActiveTab] = useState("tasks")
-  
+
   const [tasks, setTasks] = useState([])
   const [employees, setEmployees] = useState([])
   const [analytics, setAnalytics] = useState(null)
   // New State for Invoices
   const [invoices, setInvoices] = useState([])
-  
+
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -34,23 +34,23 @@ export default function AdminDashboard({ user, setUser }: any) {
         fetch("/api/tasks"),
         fetch("/api/employees"),
         fetch("/api/analytics/company"),
-        fetch("/api/admin/invoices"), 
+        fetch("/api/admin/invoices"),
       ])
 
       if (tasksRes.ok) setTasks(await tasksRes.json())
       if (empRes.ok) setEmployees(await empRes.json())
       if (analyticsRes.ok) setAnalytics(await analyticsRes.json())
-      
+
       // Handle Invoices with De-duplication Logic
       if (invoicesRes.ok) {
         const rawInvoices = await invoicesRes.json()
-        
+
         // Logic: Create a Map using invoiceNumber as the key to ensure uniqueness
         // If duplicates exist, this keeps the last one found in the array
         const uniqueInvoices = Array.from(
-            new Map(rawInvoices.map((item: any) => [item.invoiceNumber, item])).values()
+          new Map(rawInvoices.map((item: any) => [item.invoiceNumber, item])).values()
         )
-        
+
         setInvoices(uniqueInvoices as any)
       }
 
@@ -104,20 +104,27 @@ export default function AdminDashboard({ user, setUser }: any) {
           >
             Invoices
           </Button>
+          <Button 
+            onClick={() => setActiveTab("accounts")} 
+            className={getTabButtonClass("accounts")}>
+            Accounts & CA
+          </Button>
         </div>
 
         {activeTab === "tasks" && (
-            <TaskManagement tasks={tasks} employees={employees} onRefresh={fetchData} />
+          <TaskManagement tasks={tasks} employees={employees} onRefresh={fetchData} />
         )}
         {activeTab === "analytics" && (
-            <AnalyticsDashboard analytics={analytics} tasks={tasks} />
+          <AnalyticsDashboard analytics={analytics} tasks={tasks} />
         )}
         {activeTab === "employees" && (
-            <EmployeeManagement employees={employees} onRefresh={fetchData} />
+          <EmployeeManagement employees={employees} onRefresh={fetchData} />
         )}
         {/* New Component Render */}
         {activeTab === "invoices" && (
-            <InvoiceManagement invoices={invoices} onRefresh={fetchData} />
+          <InvoiceManagement invoices={invoices} onRefresh={fetchData} />
+        )}{activeTab === "accounts" && (
+          <AccountsManagement invoices={invoices} onRefresh={fetchData} />
         )}
       </main>
     </div>

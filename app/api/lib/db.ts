@@ -99,6 +99,13 @@ export const db = {
         .deleteOne({ _id: new ObjectId(id) });
       return result.deletedCount > 0;
     },
+    update: async (id: string, data: any) => {
+      const database = await mongoClient();
+      const result = await database
+        .collection("invoices")
+        .updateOne({ _id: new ObjectId(id) }, { $set: data });
+      return result.modifiedCount > 0;
+    },
   }
 
 };
