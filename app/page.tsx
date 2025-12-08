@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import LoginForm from "@/components/auth/login-form"
 import AdminDashboard from "@/components/dashboards/admin-dashboard"
 import EmployeeDashboard from "@/components/dashboards/employee-dashboard"
-
+import CADashboard from "@/components/ca/CADashboard"
 export default function Home() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -53,9 +53,12 @@ export default function Home() {
     <>
       {user.role === "Admin" ? (
         <AdminDashboard user={user} setUser={setUser} />
+      ) : user.role === "CA" ? (
+        <CADashboard/>
       ) : (
         <EmployeeDashboard user={user} setUser={setUser} />
       )}
+
     </>
   )
 }

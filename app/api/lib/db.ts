@@ -91,7 +91,14 @@ export const db = {
     getAll: async () => {
       const database = await mongoClient();
       return database.collection("invoices").find().toArray();
-    }
+    },
+    delete: async (id: string) => {
+      const database = await mongoClient();
+      const result = await database
+        .collection("invoices")
+        .deleteOne({ _id: new ObjectId(id) });
+      return result.deletedCount > 0;
+    },
   }
 
 };
