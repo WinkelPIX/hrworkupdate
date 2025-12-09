@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "../lib/db"; // Adjust path if needed
-import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
+
 
 export async function POST(req: Request) {
   try {
@@ -35,7 +37,7 @@ export async function POST(req: Request) {
     // 4. Save invoice to DB (Optional - flattening items for description field if your DB requires string)
     // You might want to update your DB schema to store 'items' as an array/json later.
     const descriptionSummary = items.map((i: any) => i.project).join(", ");
-    
+
     await db.invoices.create({
       invoiceNumber,
       billingDate: new Date(billingDate),
@@ -166,7 +168,7 @@ export async function POST(req: Request) {
     `).join('');
 
     // 1. Keep the SVG string as is
-const rawSvg = `
+    const rawSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 242088.19 61371.94">
   <defs>
     <style type="text/css">
@@ -208,9 +210,9 @@ const rawSvg = `
 </svg>
 `;
 
-// 2. Convert to Base64 (Using standard Buffer from Node.js)
-const base64Logo = Buffer.from(rawSvg).toString('base64');
-const logoSrc = `data:image/svg+xml;base64,${base64Logo}`;
+    // 2. Convert to Base64 (Using standard Buffer from Node.js)
+    const base64Logo = Buffer.from(rawSvg).toString('base64');
+    const logoSrc = `data:image/svg+xml;base64,${base64Logo}`;
     // --- HTML TEMPLATE ---
     const htmlContent = `
   <html>
@@ -332,11 +334,24 @@ const logoSrc = `data:image/svg+xml;base64,${base64Logo}`;
   </html>
 `;
 
-    const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+    const browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    });
+
     const page = await browser.newPage();
+
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
-    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+    });
+
     await browser.close();
+
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
