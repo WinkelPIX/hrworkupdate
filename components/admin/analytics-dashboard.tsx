@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { getApiUrl } from '@/lib/config';
+// import { getApiUrl } from '@/lib/config';
 export default function AnalyticsDashboard({ analytics, tasks }: any) {
   const tasksByStatus = {
     Completed: tasks?.filter((t: any) => t.taskStatus === "Completed").length || 0,

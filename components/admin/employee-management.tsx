@@ -12,37 +12,27 @@ import {
 } from "@/components/ui/dialog"
 import { Users, Plus, Trash2, Edit2 } from "lucide-react"
 
-// Recharts imports
-import {
-  LineChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts"
-
 export default function EmployeeManagement({ employees, onRefresh }: any) {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+
+  // ✅ Added salaryType ONLY
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     department: "",
     joinDate: new Date().toISOString().split("T")[0],
     password: "Emp@123",
+    salaryType: "SALARY", // SALARY | PROJECT_BASED
   })
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  // Growth chart states
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState("")
-  const [chartData, setChartData] = useState<any[]>([])
-  const [loadingGrowth, setLoadingGrowth] = useState(false)
-
   // Handle form input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
@@ -55,46 +45,10 @@ export default function EmployeeManagement({ employees, onRefresh }: any) {
       department: employee.department || "",
       joinDate: employee.joinDate,
       password: "",
+      salaryType: employee.salaryType || "SALARY",
     })
     setEditingId(employee._id)
     setShowForm(true)
-  }
-
-  // Preprocess chart data to show all months
-  const preprocessChartData = (data: any[]) => {
-    const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ]
-    const monthMap: Record<string, number> = {}
-    data.forEach((item) => {
-      const date = new Date(item.month)
-      const monthName = months[date.getMonth()]
-      monthMap[monthName] = item.tasks
-    })
-    return months.map((m) => ({ month: m, tasks: monthMap[m] || 0 }))
-  }
-
-  // Fetch employee growth
-  const fetchGrowth = async (employeeId: string) => {
-    setSelectedEmployeeId(employeeId)
-    if (!employeeId) {
-      setChartData([])
-      return
-    }
-
-    setLoadingGrowth(true)
-    try {
-      const res = await fetch(`/api/employee-growth/${encodeURIComponent(employeeId)}`)
-      if (!res.ok) throw new Error("Failed to fetch growth data")
-      const data = await res.json()
-      setChartData(preprocessChartData(data))
-    } catch (err) {
-      console.error("Growth fetch error:", err)
-      setChartData([])
-    } finally {
-      setLoadingGrowth(false)
-    }
   }
 
   // Submit form
@@ -109,11 +63,12 @@ export default function EmployeeManagement({ employees, onRefresh }: any) {
 
       const body = editingId
         ? {
-          username: formData.username,
-          email: formData.email,
-          department: formData.department,
-          joinDate: formData.joinDate,
-        }
+            username: formData.username,
+            email: formData.email,
+            department: formData.department,
+            joinDate: formData.joinDate,
+            salaryType: formData.salaryType,
+          }
         : formData
 
       const response = await fetch(url, {
@@ -135,6 +90,7 @@ export default function EmployeeManagement({ employees, onRefresh }: any) {
         department: "",
         joinDate: new Date().toISOString().split("T")[0],
         password: "Emp@123",
+        salaryType: "SALARY",
       })
 
       onRefresh()
@@ -154,73 +110,19 @@ export default function EmployeeManagement({ employees, onRefresh }: any) {
       if (!response.ok) throw new Error("Failed to delete employee")
       onRefresh()
     } catch (err) {
-      console.log("[v0] Error deleting employee:", err)
+      console.log("Error deleting employee:", err)
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* Employee Growth Chart */}
-      <div className="p-6 bg-card border border-border rounded-lg shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Employee Growth</h3>
-
-        {/* Employee dropdown */}
-        <select
-          className="px-3 py-2 border rounded bg-background text-foreground mb-6"
-          value={selectedEmployeeId}
-          onChange={(e) => fetchGrowth(e.target.value)}
-        >
-          <option value="">Select Employee</option>
-          {employees.map((emp: any) => (
-            <option key={emp._id} value={emp.employeeId}>
-              {emp.username}
-            </option>
-          ))}
-        </select>
-
-        {/* Chart */}
-        {loadingGrowth ? (
-          <p>Loading...</p>
-        ) : chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-              <CartesianGrid stroke="#374151" strokeDasharray="3 3" />
-              <XAxis
-                dataKey="month"
-                tick={{ fill: "#fff", fontSize: 12 }}
-                angle={-20}
-                textAnchor="end"
-              />
-              <YAxis tick={{ fill: "#fff", fontSize: 12 }} allowDecimals={false} />
-              <Tooltip
-                contentStyle={{ backgroundColor: "#1f2937", borderRadius: 8, border: "none" }}
-                itemStyle={{ color: "#fff" }}
-                labelStyle={{ color: "#9ca3af", fontWeight: 500 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="tasks"
-                stroke="#4f46e5"
-                strokeWidth={3}
-                dot={{ r: 6, fill: "#4f46e5", stroke: "#fff", strokeWidth: 2 }}
-                activeDot={{ r: 8, fill: "#fff", stroke: "#4f46e5", strokeWidth: 3 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-muted-foreground">
-            {selectedEmployeeId
-              ? "No completed tasks yet."
-              : "Select an employee to view growth."}
-          </p>
-        )}
-      </div>
-
       {/* Header + Add Employee */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Users className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Employee Directory</h2>
+          <h2 className="text-xl font-semibold text-foreground">
+            Employee Directory
+          </h2>
         </div>
 
         <Dialog open={showForm} onOpenChange={setShowForm}>
@@ -234,6 +136,7 @@ export default function EmployeeManagement({ employees, onRefresh }: any) {
                   department: "",
                   joinDate: new Date().toISOString().split("T")[0],
                   password: "Emp@123",
+                  salaryType: "SALARY",
                 })
                 setError("")
               }}
@@ -259,60 +162,74 @@ export default function EmployeeManagement({ employees, onRefresh }: any) {
               )}
 
               <div>
-                <label className="text-sm font-medium text-foreground">Username</label>
+                <label className="text-sm font-medium">Username</label>
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleInputChange}
-                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded text-foreground"
+                  className="w-full mt-1 px-3 py-2 border rounded"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-foreground">Email</label>
+                <label className="text-sm font-medium">Email</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded text-foreground"
+                  className="w-full mt-1 px-3 py-2 border rounded"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-foreground">Department</label>
+                <label className="text-sm font-medium">Department</label>
                 <input
                   type="text"
                   name="department"
                   value={formData.department}
                   onChange={handleInputChange}
-                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded text-foreground"
+                  className="w-full mt-1 px-3 py-2 border rounded"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-foreground">Join Date</label>
+                <label className="text-sm font-medium">Join Date</label>
                 <input
                   type="date"
                   name="joinDate"
                   value={formData.joinDate}
                   onChange={handleInputChange}
-                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded text-foreground"
+                  className="w-full mt-1 px-3 py-2 border rounded"
                 />
+              </div>
+
+              {/* ✅ Salary Type Toggle */}
+              <div>
+                <label className="text-sm font-medium">Employee Type</label>
+                <select
+                  name="salaryType"
+                  value={formData.salaryType}
+                  onChange={handleInputChange}
+                  className="w-full mt-1 px-3 py-2 border rounded"
+                >
+                  <option value="SALARY">Salary Based</option>
+                  <option value="PROJECT_BASED">Project Based</option>
+                </select>
               </div>
 
               {!editingId && (
                 <div>
-                  <label className="text-sm font-medium text-foreground">Password</label>
+                  <label className="text-sm font-medium">Password</label>
                   <input
                     type="password"
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="w-full mt-1 px-3 py-2 bg-background border border-border rounded text-foreground"
+                    className="w-full mt-1 px-3 py-2 border rounded"
                   />
                 </div>
               )}
@@ -321,16 +238,16 @@ export default function EmployeeManagement({ employees, onRefresh }: any) {
                 <Button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="bg-muted text-foreground hover:bg-muted/80"
+                  className="bg-muted"
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  {loading ? "Saving..." : editingId ? "Update Employee" : "Create Employee"}
+                <Button type="submit" disabled={loading}>
+                  {loading
+                    ? "Saving..."
+                    : editingId
+                    ? "Update Employee"
+                    : "Create Employee"}
                 </Button>
               </div>
             </form>
@@ -346,43 +263,35 @@ export default function EmployeeManagement({ employees, onRefresh }: any) {
           </div>
         ) : (
           employees.map((emp: any) => (
-            <Card
-              key={emp._id}
-              className="bg-card border-border hover:border-primary/50 transition"
-            >
+            <Card key={emp._id}>
               <CardHeader>
                 <CardTitle className="text-primary">{emp.username}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  <span className="text-foreground font-medium">Email:</span> {emp.email}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  <span className="text-foreground font-medium">Department:</span>{" "}
-                  {emp.department || "N/A"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  <span className="text-foreground font-medium">Joined:</span>{" "}
-                  {new Date(emp.joinDate).toLocaleDateString()}
+                <p>Email: {emp.email}</p>
+                <p>Department: {emp.department || "N/A"}</p>
+                <p>
+                  <strong>Type:</strong>{" "}
+                  {emp.salaryType === "PROJECT_BASED"
+                    ? "Project Based"
+                    : "Salary Based"}
                 </p>
 
-                <div className="flex gap-2 mt-4 pt-4 border-t border-border">
+                <div className="flex gap-2 pt-3">
                   <Button
                     size="sm"
                     onClick={() => handleEditEmployee(emp)}
-                    className="flex-1 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 gap-2"
+                    className="flex-1"
                   >
-                    <Edit2 className="h-4 w-4" />
-                    Edit
+                    <Edit2 className="h-4 w-4" /> Edit
                   </Button>
-
                   <Button
                     size="sm"
+                    variant="destructive"
                     onClick={() => handleDeleteEmployee(emp._id)}
-                    className="flex-1 bg-red-500/20 text-red-400 hover:bg-red-500/30 gap-2"
+                    className="flex-1"
                   >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
+                    <Trash2 className="h-4 w-4" /> Delete
                   </Button>
                 </div>
               </CardContent>

@@ -47,8 +47,19 @@ export const db = {
     getAll: async () => {
       const database = await mongoClient();
       const data = await database.collection("tasks").find({}).toArray();
-      return Array.isArray(data) ? data : [];
+
+      if (!Array.isArray(data)) return [];
+
+      // ✅ FORCE correct earning value
+      return data.map((t) => ({
+        ...t,
+        yourProjectEarning:
+          typeof t.yourProjectEarning === "string"
+            ? t.yourProjectEarning
+            : "0", // ⬅️ IMPORTANT: no fallback to paymentAmount
+      }));
     },
+
 
     getById: async (id: string) => {
       const database = await mongoClient();

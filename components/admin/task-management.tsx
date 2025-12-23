@@ -16,13 +16,19 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
     dueDate: "",
     taskStatus: "Pending",
     paymentReceived: false,
-    paymentAmount: "",
+
+    paymentAmount: "", // ✅ TOTAL PROJECT AMOUNT (already there)
+
     paymentStatus: "",
     gstApplied: false,
     sentToCA: false,
     caPaymentDone: false,
     folderPath: "",
+
+    // ✅ ADD THIS ONLY
+    yourProjectEarning: "",
   })
+
 
   const [filters, setFilters] = useState({
     clientName: "",
@@ -40,85 +46,85 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
   })
   // Invoice Started
   const [showInvoiceForm, setShowInvoiceForm] = useState(false);
- const [invoiceTask, setInvoiceTask] = useState<any>(null);
+  const [invoiceTask, setInvoiceTask] = useState<any>(null);
 
-// Define a proper type for invoice data
-interface InvoiceData {
-  invoiceNumber: string;
-  billingDate: string;
-  clientName: string;
-  clientGST: string;
-  clientAddress: string;
-  amount: number;
-  gstApplied: boolean;
-  jobDescription: string;
-  extraNotes: string;
-}
-
-const [invoiceData, setInvoiceData] = useState<InvoiceData>({
-  invoiceNumber: "",
-  billingDate: "",
-  clientName: "",
-  clientGST: "",
-  clientAddress: "",
-  amount: 0,
-  gstApplied: false,
-  jobDescription: "",
-  extraNotes: "",
-});
-
-// Open invoice form with pre-filled data
-const handleOpenInvoiceForm = (task: any) => {
-  setInvoiceTask(task);
-  setInvoiceData({
-    invoiceNumber: "",
-    billingDate: new Date().toISOString().split("T")[0], // default today's date
-    clientName: task.clientName || "",
-    clientGST: task.clientGST || "",
-    clientAddress: task.clientAddress || "", // pre-fill if available
-    amount: task.paymentAmount || 0,
-    gstApplied: task.gstApplied || false,
-    jobDescription: task.jobDescription || "Service rendered",
-    extraNotes: "",
-  });
-  setShowInvoiceForm(true);
-};
-
-// Generate invoice PDF
-const handleGenerateInvoice = async () => {
-  if (!invoiceData.clientName || !invoiceData.clientGST || !invoiceData.clientAddress) {
-    alert("Client name, GST, and address are required");
-    return;
+  // Define a proper type for invoice data
+  interface InvoiceData {
+    invoiceNumber: string;
+    billingDate: string;
+    clientName: string;
+    clientGST: string;
+    clientAddress: string;
+    amount: number;
+    gstApplied: boolean;
+    jobDescription: string;
+    extraNotes: string;
   }
 
-  // Calculate CGST/SGST if GST applied
-  const cgstAmount = invoiceData.gstApplied ? invoiceData.amount * 0.09 : 0;
-  const sgstAmount = invoiceData.gstApplied ? invoiceData.amount * 0.09 : 0;
-  const totalAmount = invoiceData.amount + cgstAmount + sgstAmount;
-
-  const response = await fetch("/api/invoice", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      invoiceNumber: invoiceData.invoiceNumber,
-      billingDate: invoiceData.billingDate,
-      clientName: invoiceData.clientName,
-      clientGST: invoiceData.clientGST,
-      clientAddress: invoiceData.clientAddress,
-      jobDescription: invoiceData.jobDescription,
-      amount: invoiceData.amount,
-      cgstAmount,
-      sgstAmount,
-      totalAmount,
-      extraNotes: invoiceData.extraNotes,
-      gstApplied: invoiceData.gstApplied,
-    }),
+  const [invoiceData, setInvoiceData] = useState<InvoiceData>({
+    invoiceNumber: "",
+    billingDate: "",
+    clientName: "",
+    clientGST: "",
+    clientAddress: "",
+    amount: 0,
+    gstApplied: false,
+    jobDescription: "",
+    extraNotes: "",
   });
 
-  const blob = await response.blob();
-  const url = window.URL.createObjectURL(blob);
-  window.open(url);
-};
+  // Open invoice form with pre-filled data
+  const handleOpenInvoiceForm = (task: any) => {
+    setInvoiceTask(task);
+    setInvoiceData({
+      invoiceNumber: "",
+      billingDate: new Date().toISOString().split("T")[0], // default today's date
+      clientName: task.clientName || "",
+      clientGST: task.clientGST || "",
+      clientAddress: task.clientAddress || "", // pre-fill if available
+      amount: task.paymentAmount || 0,
+      gstApplied: task.gstApplied || false,
+      jobDescription: task.jobDescription || "Service rendered",
+      extraNotes: "",
+    });
+    setShowInvoiceForm(true);
+  };
+
+  // Generate invoice PDF
+  const handleGenerateInvoice = async () => {
+    if (!invoiceData.clientName || !invoiceData.clientGST || !invoiceData.clientAddress) {
+      alert("Client name, GST, and address are required");
+      return;
+    }
+
+    // Calculate CGST/SGST if GST applied
+    const cgstAmount = invoiceData.gstApplied ? invoiceData.amount * 0.09 : 0;
+    const sgstAmount = invoiceData.gstApplied ? invoiceData.amount * 0.09 : 0;
+    const totalAmount = invoiceData.amount + cgstAmount + sgstAmount;
+
+    const response = await fetch("/api/invoice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        invoiceNumber: invoiceData.invoiceNumber,
+        billingDate: invoiceData.billingDate,
+        clientName: invoiceData.clientName,
+        clientGST: invoiceData.clientGST,
+        clientAddress: invoiceData.clientAddress,
+        jobDescription: invoiceData.jobDescription,
+        amount: invoiceData.amount,
+        cgstAmount,
+        sgstAmount,
+        totalAmount,
+        extraNotes: invoiceData.extraNotes,
+        gstApplied: invoiceData.gstApplied,
+      }),
+    });
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    window.open(url);
+  };
 
 
 
@@ -157,10 +163,15 @@ const handleGenerateInvoice = async () => {
       sentToCA: task.sentToCA,
       caPaymentDone: task.caPaymentDone,
       folderPath: task.folderPath || "",
-    });
-    setEditingId(task._id); // <-- use _id from MongoDB
-    setShowForm(true);
-  };
+
+      // ✅ ADD THIS
+      yourProjectEarning: task.yourProjectEarning || "",
+    })
+
+    setEditingId(task._id)
+    setShowForm(true)
+  }
+
 
 
   const handleSubmitTask = async () => {
@@ -197,13 +208,17 @@ const handleGenerateInvoice = async () => {
           dueDate: "",
           taskStatus: "Pending",
           paymentReceived: false,
-          paymentAmount: "",
+
+          paymentAmount: "",        // total project amount
+          yourProjectEarning: "",   // ✅ ADD THIS
+
           paymentStatus: "",
           gstApplied: false,
           sentToCA: false,
           caPaymentDone: false,
           folderPath: "",
         })
+
       } else {
         const error = await response.json()
         alert(`Failed to save task: ${error.error}`)
@@ -299,6 +314,16 @@ const handleGenerateInvoice = async () => {
               />
               <input
                 type="text"
+                placeholder="Your Project Earning"
+                value={formData.yourProjectEarning}
+                onChange={(e) =>
+                  setFormData({ ...formData, yourProjectEarning: e.target.value })
+                }
+                className="px-3 py-2 rounded-lg bg-input border border-border text-foreground"
+              />
+
+              <input
+                type="text"
                 placeholder="Folder Path"
                 value={formData.folderPath}
                 onChange={(e) => setFormData({ ...formData, folderPath: e.target.value })}
@@ -371,13 +396,17 @@ const handleGenerateInvoice = async () => {
                       dueDate: "",
                       taskStatus: "Pending",
                       paymentReceived: false,
-                      paymentAmount: "",
+
+                      paymentAmount: "",        // total project amount
+                      yourProjectEarning: "",   // ✅ ADD THIS
+
                       paymentStatus: "",
                       gstApplied: false,
                       sentToCA: false,
                       caPaymentDone: false,
                       folderPath: "",
                     })
+
                   }}
                   variant="outline"
                   className="flex-1 border-border hover:bg-card"
@@ -516,7 +545,7 @@ const handleGenerateInvoice = async () => {
         </CardContent>
       </Card>
       {/* Invoice */}
-      { showInvoiceForm && (
+      {showInvoiceForm && (
         <Card className="bg-card border-border mt-4">
           <CardHeader>
             <CardTitle className="text-primary">Generate Invoice</CardTitle>
