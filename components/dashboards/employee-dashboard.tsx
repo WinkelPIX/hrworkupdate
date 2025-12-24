@@ -7,38 +7,31 @@ import TasksView from "@/components/employee/tasks-view"
 import PerformanceAnalytics from "@/components/employee/performance-analytics"
 
 export default function EmployeeDashboard({ user, setUser }: any) {
-  console.log("USER OBJECT:", user)   // ← ADD HERE
   const [activeTab, setActiveTab] = useState("tasks")
   const [tasks, setTasks] = useState([])
-  const [performance, setPerformance] = useState(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 5000)
+    fetchTasks()
+    const interval = setInterval(fetchTasks, 5000)
     return () => clearInterval(interval)
   }, [])
 
-  const fetchData = async () => {
+  const fetchTasks = async () => {
     try {
-      const [tasksRes, perfRes] = await Promise.all([
-  fetch(`/api/tasks/employee/${user.username}`),
-fetch(`/api/analytics/employee/${user.username}`),
-
-])
-
-
-      if (tasksRes.ok) setTasks(await tasksRes.json())
-      if (perfRes.ok) setPerformance(await perfRes.json())
+      const res = await fetch(`/api/tasks/employee/${user.username}`)
+      if (res.ok) {
+        setTasks(await res.json())
+      }
     } catch (error) {
-      console.log("[v0] Error fetching employee data:", error)
-    } finally {
-      setLoading(false)
+      console.error("Task fetch error:", error)
     }
   }
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" })
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    })
     setUser(null)
   }
 
@@ -47,29 +40,37 @@ fetch(`/api/analytics/employee/${user.username}`),
       <EmployeeHeader user={user} onLogout={handleLogout} />
 
       <main className="container mx-auto py-8 px-4">
-        <div className="mb-6 flex gap-2 border-b border-border pb-4">
+        <div className="mb-6 flex gap-2 border-b pb-4">
           <Button
             onClick={() => setActiveTab("tasks")}
-            className={`${
-              activeTab === "tasks" ? "bg-primary text-primary-foreground" : "bg-card text-foreground hover:bg-card/80"
-            }`}
+            className={
+              activeTab === "tasks"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card"
+            }
           >
             My Tasks
           </Button>
+
           <Button
             onClick={() => setActiveTab("performance")}
-            className={`${
+            className={
               activeTab === "performance"
                 ? "bg-primary text-primary-foreground"
-                : "bg-card text-foreground hover:bg-card/80"
-            }`}
+                : "bg-card"
+            }
           >
             Performance
           </Button>
         </div>
 
-        {activeTab === "tasks" && <TasksView tasks={tasks} onRefresh={fetchData} />}
-        {activeTab === "performance" && <PerformanceAnalytics performance={performance} />}
+        {activeTab === "tasks" && (
+          <TasksView tasks={tasks} onRefresh={fetchTasks} />
+        )}
+
+        {activeTab === "performance" && (
+          <PerformanceAnalytics employeeId={user.username} />
+        )}
       </main>
     </div>
   )

@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   LineChart,
   Line,
@@ -14,7 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
-import { TrendingUp } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface MonthlyTaskData {
   month: string
@@ -26,156 +25,163 @@ interface AnalyticsData {
   tasksCompleted: number
   tasksPending: number
   totalTasks: number
-  totalRevenue: number
-  averageCompletionTime: number
-  totalHours: number
-  growthPercentage: number
   tasksByMonth: MonthlyTaskData[]
-  tasksByStatus: { Completed: number; "In Progress": number; Pending: number }
 }
 
-interface PerformanceAnalyticsProps {
+export default function PerformanceAnalytics({
+  employeeId,
+}: {
   employeeId: string
-}
-
-export default function PerformanceAnalytics({ employeeId }: PerformanceAnalyticsProps) {
+}) {
   const [performance, setPerformance] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [lineChartData, setLineChartData] = useState<MonthlyTaskData[]>([])
-  const [barChartData, setBarChartData] = useState<MonthlyTaskData[]>([])
+  const [completionData, setCompletionData] = useState<any[]>([])
+  const [growthData, setGrowthData] = useState<any[]>([])
 
   useEffect(() => {
-    const fetchPerformance = async () => {
+    const fetchAnalytics = async () => {
       try {
-        const res = await fetch(`/api/analytics/employee/${employeeId}`)
+        setLoading(true)
+
+        const res = await fetch(
+          `/api/analytics/employee/${encodeURIComponent(employeeId)}`
+        )
         if (!res.ok) throw new Error("Failed to fetch analytics")
+
         const data: AnalyticsData = await res.json()
 
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        const months = [
+          "Jan","Feb","Mar","Apr","May","Jun",
+          "Jul","Aug","Sep","Oct","Nov","Dec"
+        ]
 
-        // Prepare monthly data with defaults
-        const monthlyData: MonthlyTaskData[] = months.map((m) => {
-          const monthRecord = data.tasksByMonth.find((t) => t.month === m)
+        const monthly = months.map((m) => {
+          const found = data.tasksByMonth.find((t) => t.month === m)
           return {
             month: m,
-            completed: monthRecord?.completed || 0,
-            pending: monthRecord?.pending || 0,
+            completed: found?.completed ?? 0,
           }
         })
 
-        // Cumulative data for LineChart
-        let cumulativeCompleted = 0
-        let cumulativePending = 0
-        const cumulativeData = monthlyData.map((m) => {
-          cumulativeCompleted += m.completed
-          cumulativePending += m.pending
+        /* ===============================
+           BAR CHART → TASK COMPLETION
+        =============================== */
+        setCompletionData(monthly)
+
+        /* ===============================
+           LINE CHART → GROWTH %
+        =============================== */
+        const growth = monthly.map((curr, index) => {
+          if (index === 0) {
+            return { month: curr.month, growth: 0 }
+          }
+
+          const prev = monthly[index - 1].completed
+
+          let growthPercent = 0
+          if (prev === 0 && curr.completed > 0) {
+            growthPercent = 100
+          } else if (prev > 0) {
+            growthPercent = ((curr.completed - prev) / prev) * 100
+          }
+
           return {
-            month: m.month,
-            completed: cumulativeCompleted,
-            pending: cumulativePending,
+            month: curr.month,
+            growth: Math.round(growthPercent),
           }
         })
 
+        setGrowthData(growth)
         setPerformance(data)
-        setBarChartData(monthlyData)
-        setLineChartData(cumulativeData)
-      } catch (error) {
-        console.log("[v0] Error fetching performance:", error)
+      } catch (err) {
+        console.error(err)
+        setPerformance(null)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchPerformance()
+    fetchAnalytics()
   }, [employeeId])
 
   if (loading) return <p>Loading analytics...</p>
   if (!performance) return <p>No performance data available</p>
 
+  const completionRate = Math.round(
+    (performance.tasksCompleted / performance.totalTasks) * 100
+  )
+
   return (
     <div className="space-y-6">
-      {/* Top Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border-border">
+      {/* ===== METRICS ===== */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Completion Rate</CardTitle>
+            <CardTitle>Completion Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <p className="text-3xl font-bold text-primary">
-                {performance.totalTasks > 0
-                  ? ((performance.tasksCompleted / performance.totalTasks) * 100).toFixed(0)
-                  : 0}
-                %
-              </p>
-              <TrendingUp className="h-8 w-8 text-green-400" />
-            </div>
+            <p className="text-3xl font-bold">{completionRate}%</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Avg. Time</CardTitle>
+            <CardTitle>Total Tasks</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-accent">{performance.averageCompletionTime.toFixed(1)} days</p>
+            <p className="text-3xl font-bold">{performance.totalTasks}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Total Hours</CardTitle>
+            <CardTitle>Completed Tasks</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-secondary">{performance.totalHours} hrs</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Growth</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-green-400">+{performance.growthPercentage}%</p>
+            <p className="text-3xl font-bold">
+              {performance.tasksCompleted}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Line Chart (Cumulative) */}
-      <Card className="bg-card border-border">
+      {/* ===== GROWTH % LINE CHART ===== */}
+      <Card>
         <CardHeader>
-          <CardTitle className="text-primary">Task Completion Trend</CardTitle>
+          <CardTitle>Growth Trend (%)</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={lineChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e5a8e" />
-              <XAxis dataKey="month" stroke="#e3f2fd" />
-              <YAxis stroke="#e3f2fd" />
-              <Tooltip contentStyle={{ backgroundColor: "#0d3b66", border: "1px solid #1e5a8e" }} />
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={growthData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis unit="%" />
+              <Tooltip formatter={(v) => `${v}%`} />
               <Legend />
-              <Line type="monotone" dataKey="completed" stroke="#00bcd4" strokeWidth={2} />
-              <Line type="monotone" dataKey="pending" stroke="#ffb74d" strokeWidth={2} />
+              <Line
+                dataKey="growth"
+                stroke="#4caf50"
+                strokeWidth={3}
+              />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      {/* Bar Chart (Monthly Counts) */}
-      <Card className="bg-card border-border">
+      {/* ===== TASK COMPLETION BAR CHART ===== */}
+      <Card>
         <CardHeader>
-          <CardTitle className="text-primary">Monthly Performance</CardTitle>
+          <CardTitle>Monthly Task Completion</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={barChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e5a8e" />
-              <XAxis dataKey="month" stroke="#e3f2fd" />
-              <YAxis stroke="#e3f2fd" />
-              <Tooltip contentStyle={{ backgroundColor: "#0d3b66", border: "1px solid #1e5a8e" }} />
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={completionData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
               <Legend />
               <Bar dataKey="completed" fill="#00bcd4" />
-              <Bar dataKey="pending" fill="#ffb74d" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
