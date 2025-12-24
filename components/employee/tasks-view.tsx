@@ -21,9 +21,14 @@ interface Task {
 interface TasksViewProps {
   tasks: Task[]
   onRefresh: () => Promise<void>
+  employeeType: "SALARY" | "PROJECT_BASED"   // ✅ DB VALUES
 }
 
-export default function TasksView({ tasks = [], onRefresh }: TasksViewProps) {
+export default function TasksView({
+  tasks = [],
+  onRefresh,
+  employeeType,
+}: TasksViewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [workDoneDate, setWorkDoneDate] = useState("")
   const [folderPath, setFolderPath] = useState("")
@@ -39,23 +44,22 @@ export default function TasksView({ tasks = [], onRefresh }: TasksViewProps) {
     return isNaN(val) || val <= 0 ? 0 : val
   }
 
-  const hasEarnings =
-    safeTasks.length > 0 &&
-    safeTasks.some(
-      (t) => t.yourProjectEarning && Number(t.yourProjectEarning) > 0
-    )
+  // ✅ SINGLE CONTROL BASED ON DB VALUE
+  // ✅ SINGLE CONTROL BASED ON DB VALUE (SAFE)
+  const showEarnings =
+    employeeType?.toUpperCase().replace(/\s/g, "_") === "PROJECT_BASED"
+
 
   const totalCompletedAmount = completedTasks.reduce(
-    (sum, task) => sum + getEmployeeEarning(task),
+    (sum, task) => sum + (showEarnings ? getEmployeeEarning(task) : 0),
     0
   )
 
   const totalPendingAmount = pendingTasks.reduce(
-    (sum, task) => sum + getEmployeeEarning(task),
+    (sum, task) => sum + (showEarnings ? getEmployeeEarning(task) : 0),
     0
   )
 
-  // ✅ FIXED COMPLETE HANDLER
   const handleMarkComplete = async (taskId: string) => {
     if (!workDoneDate) {
       alert("Please select a completion date")
@@ -69,7 +73,7 @@ export default function TasksView({ tasks = [], onRefresh }: TasksViewProps) {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          workDoneDate: new Date(workDoneDate), // 🔥 IMPORTANT FIX
+          workDoneDate: new Date(workDoneDate),
           folderPath,
           taskStatus: "Completed",
         }),
@@ -128,7 +132,7 @@ export default function TasksView({ tasks = [], onRefresh }: TasksViewProps) {
           </CardContent>
         </Card>
 
-        {hasEarnings && (
+        {showEarnings && (
           <>
             <Card>
               <CardHeader>
@@ -171,9 +175,11 @@ export default function TasksView({ tasks = [], onRefresh }: TasksViewProps) {
                 <tr className="border-b">
                   <th className="py-3 px-4 text-left">Client</th>
                   <th className="py-3 px-4 text-left">Project</th>
-                  {hasEarnings && (
+
+                  {showEarnings && (
                     <th className="py-3 px-4 text-left">Your Earning</th>
                   )}
+
                   <th className="py-3 px-4 text-left">Work Given</th>
                   <th className="py-3 px-4 text-left">Due Date</th>
                   <th className="py-3 px-4 text-left">Done Date</th>
@@ -189,7 +195,7 @@ export default function TasksView({ tasks = [], onRefresh }: TasksViewProps) {
                     <td className="py-3 px-4">{task.clientName}</td>
                     <td className="py-3 px-4">{task.projectName}</td>
 
-                    {hasEarnings && (
+                    {showEarnings && (
                       <td className="py-3 px-4">
                         ₹{getEmployeeEarning(task)}
                       </td>

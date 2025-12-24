@@ -65,7 +65,11 @@ export default function EmployeeDashboard({ user, setUser }: any) {
         </div>
 
         {activeTab === "tasks" && (
-          <TasksView tasks={tasks} onRefresh={fetchTasks} />
+          <TasksView
+            tasks={tasks}
+            onRefresh={fetchTasks}
+            employeeType={user.salaryType}   // ✅ ADDED
+          />
         )}
 
         {activeTab === "performance" && (
