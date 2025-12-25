@@ -35,6 +35,11 @@ export default function TasksView({
   const [loading, setLoading] = useState(false)
 
   const safeTasks = Array.isArray(tasks) ? tasks : []
+  const sortedTasks = [...safeTasks].sort(
+    (a, b) =>
+      new Date(b.workGivenDate).getTime() -
+      new Date(a.workGivenDate).getTime()
+  )
 
   const pendingTasks = safeTasks.filter((t) => t.taskStatus !== "Completed")
   const completedTasks = safeTasks.filter((t) => t.taskStatus === "Completed")
@@ -190,7 +195,8 @@ export default function TasksView({
               </thead>
 
               <tbody>
-                {safeTasks.map((task) => (
+                {sortedTasks.map((task) => (
+
                   <tr key={task._id} className="border-b">
                     <td className="py-3 px-4">{task.clientName}</td>
                     <td className="py-3 px-4">{task.projectName}</td>
