@@ -4,6 +4,13 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface Task {
   _id: string
@@ -14,14 +21,14 @@ interface Task {
   dueDate: string
   workDoneDate?: string
   folderPath?: string
-  taskStatus: "Completed" | "In Progress" | "Pending"
+  taskStatus: "Completed" | "In Progress" | "Pending" | "On Hold"
   yourProjectEarning?: string
 }
 
 interface TasksViewProps {
   tasks: Task[]
   onRefresh: () => Promise<void>
-  employeeType: "SALARY" | "PROJECT_BASED"   // ✅ DB VALUES
+  employeeType: "SALARY" | "PROJECT_BASED"
 }
 
 export default function TasksView({
@@ -33,6 +40,7 @@ export default function TasksView({
   const [workDoneDate, setWorkDoneDate] = useState("")
   const [folderPath, setFolderPath] = useState("")
   const [loading, setLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>("All") // ✅ New filter state
 
   const safeTasks = Array.isArray(tasks) ? tasks : []
   const sortedTasks = [...safeTasks].sort(
@@ -40,6 +48,11 @@ export default function TasksView({
       new Date(b.workGivenDate).getTime() -
       new Date(a.workGivenDate).getTime()
   )
+
+  // ✅ Filter tasks by status
+  const filteredTasks = statusFilter === "All" 
+    ? sortedTasks 
+    : sortedTasks.filter(task => task.taskStatus === statusFilter)
 
   const pendingTasks = safeTasks.filter((t) => t.taskStatus !== "Completed")
   const completedTasks = safeTasks.filter((t) => t.taskStatus === "Completed")
@@ -49,11 +62,8 @@ export default function TasksView({
     return isNaN(val) || val <= 0 ? 0 : val
   }
 
-  // ✅ SINGLE CONTROL BASED ON DB VALUE
-  // ✅ SINGLE CONTROL BASED ON DB VALUE (SAFE)
   const showEarnings =
     employeeType?.toUpperCase().replace(/\s/g, "_") === "PROJECT_BASED"
-
 
   const totalCompletedAmount = completedTasks.reduce(
     (sum, task) => sum + (showEarnings ? getEmployeeEarning(task) : 0),
@@ -168,10 +178,25 @@ export default function TasksView({
         )}
       </div>
 
-      {/* Task Table */}
+      {/* Task Table with Filter */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Task List</CardTitle>
+          {/* ✅ Filter Section */}
+          <div className="w-48">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Tasks</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="On Hold">On Hold</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -195,8 +220,7 @@ export default function TasksView({
               </thead>
 
               <tbody>
-                {sortedTasks.map((task) => (
-
+                {filteredTasks.map((task) => (
                   <tr key={task._id} className="border-b">
                     <td className="py-3 px-4">{task.clientName}</td>
                     <td className="py-3 px-4">{task.projectName}</td>
@@ -292,6 +316,13 @@ export default function TasksView({
                     </td>
                   </tr>
                 ))}
+                {filteredTasks.length === 0 && (
+                  <tr>
+                    <td colSpan={10} className="py-8 text-center text-muted-foreground">
+                      No tasks found for selected filter
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
