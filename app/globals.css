@@ -3,109 +3,160 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ======================================================
+   PROFESSIONAL DARK SAAS THEME
+   ====================================================== */
+
 :root {
-  /* <CHANGE> Oceanic theme colors - deep blues, teals, and aqua accents */
-  --background: #0a1929;
-  --foreground: #e3f2fd;
-  --card: #0d3b66;
-  --card-foreground: #e3f2fd;
-  --popover: #0d3b66;
-  --popover-foreground: #e3f2fd;
-  --primary: #00bcd4;
-  --primary-foreground: #0a1929;
-  --secondary: #1e5a8e;
-  --secondary-foreground: #e3f2fd;
-  --muted: #1a4d6d;
-  --muted-foreground: #64b5f6;
-  --accent: #ffb74d;
-  --accent-foreground: #0a1929;
-  --destructive: #e57373;
+  /* Base */
+  --background: #0b1220;           /* deep navy */
+  --foreground: #e5e7eb;           /* soft white */
+
+  /* Surfaces */
+  --card: #111827;                 /* slate-900 */
+  --card-foreground: #e5e7eb;
+
+  --popover: #111827;
+  --popover-foreground: #e5e7eb;
+
+  /* Brand / Primary */
+  --primary: #3b82f6;              /* blue-500 */
+  --primary-foreground: #ffffff;
+
+  /* Secondary */
+  --secondary: #1f2937;            /* slate-800 */
+  --secondary-foreground: #e5e7eb;
+
+  /* Muted */
+  --muted: #020617;                /* slate-950 */
+  --muted-foreground: #9ca3af;     /* gray-400 */
+
+  /* Accent */
+  --accent: #22c55e;               /* emerald-500 */
+  --accent-foreground: #022c22;
+
+  /* Destructive */
+  --destructive: #ef4444;          /* red-500 */
   --destructive-foreground: #ffffff;
-  --border: #1e5a8e;
-  --input: #0d3b66;
-  --ring: #00bcd4;
-  --chart-1: #00bcd4;
-  --chart-2: #64b5f6;
-  --chart-3: #1e5a8e;
-  --chart-4: #ffb74d;
-  --chart-5: #81c784;
-  --radius: 0.625rem;
-  --sidebar: #0d3b66;
-  --sidebar-foreground: #e3f2fd;
-  --sidebar-primary: #00bcd4;
-  --sidebar-primary-foreground: #0a1929;
-  --sidebar-accent: #ffb74d;
-  --sidebar-accent-foreground: #0a1929;
-  --sidebar-border: #1e5a8e;
-  --sidebar-ring: #00bcd4;
+
+  /* Borders & Inputs */
+  --border: #1f2937;
+  --input: #020617;
+  --ring: #3b82f6;
+
+  /* Charts */
+  --chart-1: #3b82f6;
+  --chart-2: #22c55e;
+  --chart-3: #f59e0b;
+  --chart-4: #a855f7;
+  --chart-5: #ec4899;
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar: #020617;
+  --sidebar-foreground: #e5e7eb;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1f2937;
+  --sidebar-accent-foreground: #e5e7eb;
+  --sidebar-border: #1f2937;
+  --sidebar-ring: #3b82f6;
 }
 
+/* Dark mode (same – dark first design) */
 .dark {
-  --background: #0a1929;
-  --foreground: #e3f2fd;
-  --card: #0d3b66;
-  --card-foreground: #e3f2fd;
-  --popover: #0d3b66;
-  --popover-foreground: #e3f2fd;
-  --primary: #00bcd4;
-  --primary-foreground: #0a1929;
-  --secondary: #1e5a8e;
-  --secondary-foreground: #e3f2fd;
-  --muted: #1a4d6d;
-  --muted-foreground: #64b5f6;
-  --accent: #ffb74d;
-  --accent-foreground: #0a1929;
-  --destructive: #e57373;
+  --background: #0b1220;
+  --foreground: #e5e7eb;
+
+  --card: #111827;
+  --card-foreground: #e5e7eb;
+
+  --popover: #111827;
+  --popover-foreground: #e5e7eb;
+
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+
+  --secondary: #1f2937;
+  --secondary-foreground: #e5e7eb;
+
+  --muted: #020617;
+  --muted-foreground: #9ca3af;
+
+  --accent: #22c55e;
+  --accent-foreground: #022c22;
+
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #1e5a8e;
-  --input: #0d3b66;
-  --ring: #00bcd4;
-  --chart-1: #00bcd4;
-  --chart-2: #64b5f6;
-  --chart-3: #1e5a8e;
-  --chart-4: #ffb74d;
-  --chart-5: #81c784;
-  --sidebar: #0d3b66;
-  --sidebar-foreground: #e3f2fd;
-  --sidebar-primary: #00bcd4;
-  --sidebar-primary-foreground: #0a1929;
-  --sidebar-accent: #ffb74d;
-  --sidebar-accent-foreground: #0a1929;
-  --sidebar-border: #1e5a8e;
-  --sidebar-ring: #00bcd4;
+
+  --border: #1f2937;
+  --input: #020617;
+  --ring: #3b82f6;
+
+  --chart-1: #3b82f6;
+  --chart-2: #22c55e;
+  --chart-3: #f59e0b;
+  --chart-4: #a855f7;
+  --chart-5: #ec4899;
+
+  --sidebar: #020617;
+  --sidebar-foreground: #e5e7eb;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1f2937;
+  --sidebar-accent-foreground: #e5e7eb;
+  --sidebar-border: #1f2937;
+  --sidebar-ring: #3b82f6;
 }
 
+/* ======================================================
+   TAILWIND THEME MAPPING
+   ====================================================== */
 @theme inline {
   --font-sans: "Geist", "Geist Fallback";
   --font-mono: "Geist Mono", "Geist Mono Fallback";
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -116,11 +167,15 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ======================================================
+   BASE STYLES
+   ====================================================== */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 }

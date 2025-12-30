@@ -8,6 +8,7 @@ import AnalyticsDashboard from "@/components/admin/analytics-dashboard"
 import EmployeeManagement from "@/components/admin/employee-management"
 import AccountsManagement from "@/components/admin/accounts-management"
 import InvoiceManagement from "@/components/admin/invoice-management"
+import LeaveApproval from "@/components/admin/leave-approval"
 
 export default function AdminDashboard({ user, setUser }: any) {
   // Added "invoices" to potential tabs
@@ -92,6 +93,13 @@ export default function AdminDashboard({ user, setUser }: any) {
             Analytics
           </Button>
           <Button
+            onClick={() => setActiveTab("leaves")}
+            className={getTabButtonClass("leaves")}
+          >
+            Leave Approval
+          </Button>
+
+          <Button
             onClick={() => setActiveTab("employees")}
             className={getTabButtonClass("employees")}
           >
@@ -104,8 +112,8 @@ export default function AdminDashboard({ user, setUser }: any) {
           >
             Invoices
           </Button>
-          <Button 
-            onClick={() => setActiveTab("accounts")} 
+          <Button
+            onClick={() => setActiveTab("accounts")}
             className={getTabButtonClass("accounts")}>
             Accounts & CA
           </Button>
@@ -126,6 +134,7 @@ export default function AdminDashboard({ user, setUser }: any) {
         )}{activeTab === "accounts" && (
           <AccountsManagement invoices={invoices} onRefresh={fetchData} />
         )}
+        {activeTab === "leaves" && <LeaveApproval />}
       </main>
     </div>
   )

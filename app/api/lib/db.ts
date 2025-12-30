@@ -150,5 +150,44 @@ export const db = {
       await database.collection("attendance").insertOne(payload)
       return payload
     },
+
+    // ✅ ADD THIS METHOD
+    update: async (id: string, data: any) => {
+      const database = await mongoClient()
+      await database
+        .collection("attendance")
+        .updateOne(
+          { _id: new ObjectId(id) },
+          { $set: data }
+        )
+
+      return database
+        .collection("attendance")
+        .findOne({ _id: new ObjectId(id) })
+    },
   },
+
+
+  leaveRequests: {
+    create: async (data: any) => {
+      const database = await mongoClient()
+      const payload = {
+        ...data,
+        status: "PENDING",
+        createdAt: new Date(),
+      }
+      await database.collection("leave_requests").insertOne(payload)
+      return payload
+    },
+
+    findByEmployee: async (employeeId: string) => {
+      const database = await mongoClient()
+      return database
+        .collection("leave_requests")
+        .find({ employeeId })
+        .sort({ createdAt: -1 })
+        .toArray()
+    },
+  },
+
 }

@@ -4,161 +4,147 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
-type AttendanceStatus = "FULL" | "HALF" | "ABSENT" | "LEAVE"
+type Mode = "FULL" | "HALF" | "ABSENT" | "LEAVE"
 
-interface AttendanceViewProps {
-  employeeId: string // username
-}
-
-export default function AttendanceView({ employeeId }: AttendanceViewProps) {
-  const [status, setStatus] = useState<AttendanceStatus>("FULL")
+export default function AttendanceView({ employeeId }: { employeeId: string }) {
+  const [mode, setMode] = useState<Mode>("FULL")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
-  const [totalDays, setTotalDays] = useState(0)
 
-  /* ================= Fetch Attendance Count ================= */
-  const fetchAttendance = async () => {
-    try {
-      const res = await fetch(
-        `/api/attendance?employeeId=${employeeId}`
-      )
-      const data = await res.json()
+  // leave fields
+  const [fromDate, setFromDate] = useState("")
+  const [toDate, setToDate] = useState("")
+  const [days, setDays] = useState(1)
+  const [reason, setReason] = useState("")
+  const [records, setRecords] = useState<any[]>([])
 
-      if (Array.isArray(data)) {
-        setTotalDays(data.length)
-      }
-    } catch (error) {
-      console.error("Fetch attendance error:", error)
-    }
+  const fetchData = async () => {
+    const res = await fetch(`/api/attendance?employeeId=${employeeId}`)
+    const data = await res.json()
+    if (Array.isArray(data)) setRecords(data)
   }
 
   useEffect(() => {
-    fetchAttendance()
+    fetchData()
   }, [])
 
-  /* ================= Submit Attendance ================= */
-  const submitAttendance = async () => {
+  const submit = async () => {
     setMessage("")
-
-    if (!password) {
-      setMessage("Please enter your password")
-      return
-    }
-
     setLoading(true)
+
+    const payload =
+      mode === "LEAVE"
+        ? {
+            employeeId,
+            type: "LEAVE",
+            fromDate,
+            toDate,
+            days,
+            reason,
+          }
+        : {
+            employeeId,
+            type: "ATTENDANCE",
+            status: mode,
+            password,
+          }
 
     try {
       const res = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          employeeId,
-          status,
-          password,
-        }),
+        body: JSON.stringify(payload),
       })
 
       const data = await res.json()
 
       if (!res.ok) {
-        setMessage(data.error || "Failed to mark attendance")
+        setMessage(data.error || "Failed")
       } else {
-        setMessage("Attendance marked successfully ✅")
+        setMessage("Submitted successfully ✅")
         setPassword("")
-        fetchAttendance()
+        setFromDate("")
+        setToDate("")
+        setDays(1)
+        setReason("")
+        fetchData()
       }
     } catch {
-      setMessage("Server error, please try again")
+      setMessage("Server error")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex justify-start">
-      <Card className="w-full max-w-md shadow-lg border border-border bg-background">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">
-            Attendance
-          </CardTitle>
-        </CardHeader>
+    <Card className="max-w-2xl">
+      <CardHeader>
+        <CardTitle>Attendance & Leave</CardTitle>
+      </CardHeader>
 
-        <CardContent className="space-y-4">
-          {/* Status */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium">
-              Attendance Type
-            </label>
-            <select
-              value={status}
-              onChange={(e) =>
-                setStatus(e.target.value as AttendanceStatus)
-              }
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+      <CardContent className="space-y-4">
+        <select
+          value={mode}
+          onChange={(e) => setMode(e.target.value as Mode)}
+          className="w-full border px-3 py-2 rounded"
+        >
+          <option value="FULL">Full Day</option>
+          <option value="HALF">Half Day</option>
+          <option value="ABSENT">Absent</option>
+          <option value="LEAVE">Leave</option>
+        </select>
+
+        {mode !== "LEAVE" && (
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border px-3 py-2 rounded pr-12"
+              placeholder="Password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
             >
-              <option value="FULL">Full Day</option>
-              <option value="HALF">Half Day</option>
-              <option value="ABSENT">Absent</option>
-              <option value="LEAVE">Leave</option>
-            </select>
+              {showPassword ? "HIDE" : "SHOW"}
+            </button>
           </div>
+        )}
 
-          {/* Password */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your login password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? "HIDE" : "SHOW"}
-              </button>
+        {mode === "LEAVE" && (
+          <>
+            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="border px-3 py-2 rounded" />
+            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="border px-3 py-2 rounded" />
+            <input type="number" min={1} value={days} onChange={(e) => setDays(+e.target.value)} className="border px-3 py-2 rounded" />
+            <textarea value={reason} onChange={(e) => setReason(e.target.value)} className="border px-3 py-2 rounded" placeholder="Reason" />
+          </>
+        )}
+
+        <Button onClick={submit} disabled={loading}>
+          {loading ? "Submitting..." : "Submit"}
+        </Button>
+
+        {message && <p className="text-sm">{message}</p>}
+
+        <div className="space-y-2">
+          {records.map((r) => (
+            <div key={r._id} className="border p-2 rounded text-sm flex justify-between">
+              <span>
+                {r.type === "LEAVE"
+                  ? `Leave ${r.fromDate} → ${r.toDate}`
+                  : `Attendance ${r.date} (${r.status})`}
+              </span>
+              {r.type === "LEAVE" && (
+                <span className="text-yellow-600">{r.approvalStatus}</span>
+              )}
             </div>
-          </div>
-
-          {/* Submit */}
-          <Button
-            onClick={submitAttendance}
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? "Submitting..." : "Submit Attendance"}
-          </Button>
-
-          {/* Message */}
-          {message && (
-            <p
-              className={`text-sm text-center ${
-                message.includes("success")
-                  ? "text-green-600"
-                  : "text-red-500"
-              }`}
-            >
-              {message}
-            </p>
-          )}
-
-          {/* Count */}
-          <div className="pt-2 text-center text-sm text-muted-foreground">
-            Total Days Marked:{" "}
-            <span className="font-semibold text-foreground">
-              {totalDays}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
