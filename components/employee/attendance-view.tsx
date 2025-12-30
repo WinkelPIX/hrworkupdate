@@ -86,15 +86,52 @@ export default function AttendanceView({ employeeId }: { employeeId: string }) {
 
       <CardContent className="space-y-4">
         <select
-          value={mode}
-          onChange={(e) => setMode(e.target.value as Mode)}
-          className="w-full border px-3 py-2 rounded"
-        >
-          <option value="FULL">Full Day</option>
-          <option value="HALF">Half Day</option>
-          <option value="ABSENT">Absent</option>
-          <option value="LEAVE">Leave</option>
-        </select>
+  value={mode}
+  onChange={(e) => setMode(e.target.value as Mode)}
+  className="
+    w-full
+    rounded-md
+    border
+    border-border
+    bg-background
+    text-foreground
+    px-3
+    py-2
+    text-sm
+    focus:outline-none
+    focus:ring-2
+    focus:ring-primary
+  "
+>
+  <option
+    value="FULL"
+    className="bg-background text-foreground"
+  >
+    Full Day
+  </option>
+
+  <option
+    value="HALF"
+    className="bg-background text-foreground"
+  >
+    Half Day
+  </option>
+
+  <option
+    value="ABSENT"
+    className="bg-background text-foreground"
+  >
+    Absent
+  </option>
+
+  <option
+    value="LEAVE"
+    className="bg-background text-foreground"
+  >
+    Leave
+  </option>
+</select>
+
 
         {mode !== "LEAVE" && (
           <div className="relative">
