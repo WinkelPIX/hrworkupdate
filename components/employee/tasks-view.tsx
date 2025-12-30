@@ -14,7 +14,7 @@ interface Task {
   dueDate: string
   workDoneDate?: string
   folderPath?: string
-  taskStatus: "Completed" | "In Progress" | "Pending"
+  taskStatus: "Completed" | "In Progress" | "Pending" | "On Hold"
   yourProjectEarning?: string
 }
 
@@ -36,7 +36,7 @@ export default function TasksView({
 
   const safeTasks = Array.isArray(tasks) ? tasks : []
 
-  /* ===================== MONTH LOGIC ===================== */
+  /* ===================== MONTH FILTER ===================== */
 
   const now = new Date()
   const [selectedMonth, setSelectedMonth] = useState(
@@ -63,19 +63,28 @@ export default function TasksView({
     })
   }, [safeTasks, selectedMonth])
 
-  const sortedTasks = [...monthlyTasks].sort(
+  /* ===================== STATUS FILTER ===================== */
+
+  const [selectedStatus, setSelectedStatus] = useState<"ALL" | Task["taskStatus"]>("ALL")
+
+  const filteredTasks = useMemo(() => {
+    if (selectedStatus === "ALL") return monthlyTasks
+    return monthlyTasks.filter((t) => t.taskStatus === selectedStatus)
+  }, [monthlyTasks, selectedStatus])
+
+  const sortedTasks = [...filteredTasks].sort(
     (a, b) =>
       new Date(b.workGivenDate).getTime() -
       new Date(a.workGivenDate).getTime()
   )
 
-  /* ===================== STATUS ===================== */
+  /* ===================== COUNTS ===================== */
 
-  const pendingTasks = monthlyTasks.filter(
+  const pendingTasks = filteredTasks.filter(
     (t) => t.taskStatus !== "Completed"
   )
 
-  const completedTasks = monthlyTasks.filter(
+  const completedTasks = filteredTasks.filter(
     (t) => t.taskStatus === "Completed"
   )
 
@@ -124,7 +133,7 @@ export default function TasksView({
       setSelectedTask(null)
       setWorkDoneDate("")
       setFolderPath("")
-    } catch (error) {
+    } catch {
       alert("Failed to update task")
     } finally {
       setLoading(false)
@@ -134,8 +143,9 @@ export default function TasksView({
   return (
     <div className="space-y-6">
 
-      {/* 🔽 Month Selector */}
-      <div className="flex justify-end">
+      {/* 🔽 Filters */}
+      <div className="flex flex-wrap justify-end gap-3">
+        {/* Month */}
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
@@ -150,6 +160,21 @@ export default function TasksView({
             </option>
           ))}
         </select>
+
+        {/* Status */}
+        <select
+          value={selectedStatus}
+          onChange={(e) =>
+            setSelectedStatus(e.target.value as any)
+          }
+          className="px-3 py-2 rounded-lg bg-input border text-sm"
+        >
+          <option value="ALL">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="On Hold">On Hold</option>
+          <option value="Completed">Completed</option>
+        </select>
       </div>
 
       {/* 📊 Summary Cards */}
@@ -157,11 +182,11 @@ export default function TasksView({
         <Card>
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">
-              Total Assigned (Month)
+              Total (Filtered)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{monthlyTasks.length}</p>
+            <p className="text-3xl font-bold">{filteredTasks.length}</p>
           </CardContent>
         </Card>
 
@@ -234,7 +259,7 @@ export default function TasksView({
                 {sortedTasks.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="text-center py-8 text-muted-foreground">
-                      No tasks for this month
+                      No tasks found
                     </td>
                   </tr>
                 ) : (
@@ -242,13 +267,11 @@ export default function TasksView({
                     <tr key={task._id} className="border-b">
                       <td className="py-3 px-4">{task.clientName}</td>
                       <td className="py-3 px-4">{task.projectName}</td>
-
                       {showEarnings && (
                         <td className="py-3 px-4">
                           ₹{getEmployeeEarning(task)}
                         </td>
                       )}
-
                       <td className="py-3 px-4">
                         {new Date(task.workGivenDate).toLocaleDateString()}
                       </td>
@@ -266,56 +289,8 @@ export default function TasksView({
                       <td className="py-3 px-4 text-xs">
                         {task.taskStatus}
                       </td>
-
                       <td className="py-3 px-4 text-center">
-                        {selectedTask?._id === task._id ? (
-                          <div className="space-y-2">
-                            <input
-                              type="date"
-                              value={workDoneDate}
-                              onChange={(e) =>
-                                setWorkDoneDate(e.target.value)
-                              }
-                              className="w-full border rounded px-2 py-1 text-sm"
-                            />
-                            <input
-                              type="text"
-                              value={folderPath}
-                              onChange={(e) =>
-                                setFolderPath(e.target.value)
-                              }
-                              placeholder="Folder path"
-                              className="w-full border rounded px-2 py-1 text-sm"
-                            />
-
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                disabled={loading}
-                                onClick={() =>
-                                  handleMarkComplete(task._id)
-                                }
-                                className="flex-1 bg-green-600 text-white"
-                              >
-                                <Check className="h-3 w-3 mr-1" />
-                                Save
-                              </Button>
-
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedTask(null)
-                                  setWorkDoneDate("")
-                                  setFolderPath("")
-                                }}
-                                className="flex-1"
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        ) : task.taskStatus !== "Completed" ? (
+                        {task.taskStatus !== "Completed" ? (
                           <Button
                             size="sm"
                             onClick={() => {
