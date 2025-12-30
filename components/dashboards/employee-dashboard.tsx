@@ -5,9 +5,13 @@ import { Button } from "@/components/ui/button"
 import EmployeeHeader from "@/components/employee/employee-header"
 import TasksView from "@/components/employee/tasks-view"
 import PerformanceAnalytics from "@/components/employee/performance-analytics"
+import AttendanceView from "@/components/employee/attendance-view" // ✅ ADDED
 
 export default function EmployeeDashboard({ user, setUser }: any) {
-  const [activeTab, setActiveTab] = useState("tasks")
+  const [activeTab, setActiveTab] = useState<
+    "tasks" | "attendance" | "performance"
+  >("tasks")
+
   const [tasks, setTasks] = useState([])
 
   useEffect(() => {
@@ -40,7 +44,9 @@ export default function EmployeeDashboard({ user, setUser }: any) {
       <EmployeeHeader user={user} onLogout={handleLogout} />
 
       <main className="container mx-auto py-8 px-4">
+        {/* 🔹 Tabs */}
         <div className="mb-6 flex gap-2 border-b pb-4">
+
           <Button
             onClick={() => setActiveTab("tasks")}
             className={
@@ -53,6 +59,17 @@ export default function EmployeeDashboard({ user, setUser }: any) {
           </Button>
 
           <Button
+            onClick={() => setActiveTab("attendance")}
+            className={
+              activeTab === "attendance"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card"
+            }
+          >
+            Attendance
+          </Button>
+
+          <Button
             onClick={() => setActiveTab("performance")}
             className={
               activeTab === "performance"
@@ -62,14 +79,20 @@ export default function EmployeeDashboard({ user, setUser }: any) {
           >
             Performance
           </Button>
+
         </div>
 
+        {/* 🔹 Content */}
         {activeTab === "tasks" && (
           <TasksView
             tasks={tasks}
             onRefresh={fetchTasks}
-            employeeType={user.salaryType}   // ✅ ADDED
+            employeeType={user.salaryType}
           />
+        )}
+
+        {activeTab === "attendance" && (
+          <AttendanceView employeeId={user.username} />
         )}
 
         {activeTab === "performance" && (
