@@ -6,11 +6,12 @@ import EmployeeHeader from "@/components/employee/employee-header"
 import TasksView from "@/components/employee/tasks-view"
 import PerformanceAnalytics from "@/components/employee/performance-analytics"
 import AttendanceView from "@/components/employee/attendance-view" // ✅ ADDED
-
+import AvailableTasks from "@/components/employee/available-tasks"
 export default function EmployeeDashboard({ user, setUser }: any) {
   const [activeTab, setActiveTab] = useState<
-    "tasks" | "attendance" | "performance"
+    "tasks" | "available" | "attendance" | "performance"
   >("tasks")
+
 
   const [tasks, setTasks] = useState([])
 
@@ -57,6 +58,19 @@ export default function EmployeeDashboard({ user, setUser }: any) {
           >
             My Tasks
           </Button>
+          {user.salaryType === "PROJECT_BASED" && (
+            <Button
+              onClick={() => setActiveTab("available")}
+              className={
+                activeTab === "available"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card"
+              }
+            >
+              Available Tasks
+            </Button>
+          )}
+
 
           <Button
             onClick={() => setActiveTab("attendance")}
@@ -97,6 +111,12 @@ export default function EmployeeDashboard({ user, setUser }: any) {
 
         {activeTab === "performance" && (
           <PerformanceAnalytics employeeId={user.username} />
+        )}
+        {activeTab === "available" && user.salaryType === "PROJECT_BASED" && (
+          <AvailableTasks
+            employeeId={user.username}
+            onTaken={fetchTasks}
+          />
         )}
       </main>
     </div>

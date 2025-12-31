@@ -1,69 +1,98 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { db } from "@/app/api/lib/db";
+import { type NextRequest, NextResponse } from "next/server"
+import { db } from "@/app/api/lib/db"
 
-// --------------------- GET API ---------------------
+/* ===================== GET: ALL TASKS (ADMIN) ===================== */
 export async function GET() {
   try {
-    const tasks = await db.tasks.getAll();
+    const tasks = await db.tasks.getAll()
 
-    // Convert _id to string for frontend
-    const tasksWithId = tasks.map((t) => ({
+    const tasksWithId = tasks.map((t: any) => ({
       ...t,
       _id: t._id.toString(),
-    }));
+    }))
 
-    return NextResponse.json(tasksWithId);
+    return NextResponse.json(tasksWithId)
   } catch (error) {
-    console.log("[v0] Error fetching tasks:", error);
-    return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
+    console.log("[v0] Error fetching tasks:", error)
+    return NextResponse.json(
+      { error: "Failed to fetch tasks" },
+      { status: 500 }
+    )
   }
 }
 
-
-// --------------------- POST API ---------------------
+/* ===================== POST: CREATE TASK (ADMIN) ===================== */
 export async function POST(request: NextRequest) {
   try {
-    const taskData = await request.json();
+    const taskData = await request.json()
 
-    if (!taskData.employeeId || !taskData.projectName || !taskData.clientName) {
+    const {
+      clientName,
+      projectName,
+      employeeId,
+      assignmentType = "DIRECT", // 🟢 NEW
+    } = taskData
+
+    if (!clientName || !projectName) {
       return NextResponse.json(
-        { error: "employeeId, projectName, and clientName are required" },
+        { error: "clientName and projectName are required" },
         { status: 400 }
-      );
+      )
+    }
+
+    // 🔒 DIRECT TASK REQUIRES EMPLOYEE
+    if (assignmentType === "DIRECT" && !employeeId) {
+      return NextResponse.json(
+        { error: "employeeId is required for DIRECT task" },
+        { status: 400 }
+      )
     }
 
     const newTask = await db.tasks.create({
-      clientName: taskData.clientName,
-      projectName: taskData.projectName,
-      employeeId: taskData.employeeId,
+      clientName,
+      projectName,
+
+      // 👇 CORE LOGIC
+      assignmentType,                     // DIRECT | OPEN
+      employeeId:
+        assignmentType === "DIRECT"
+          ? employeeId
+          : null,                          // OPEN TASK
+
+      allowedEmployeeType:
+        assignmentType === "OPEN"
+          ? "PROJECT_BASED"
+          : null,
 
       workGivenDate:
-        taskData.workGivenDate || new Date().toISOString().split("T")[0],
+        taskData.workGivenDate ||
+        new Date().toISOString().split("T")[0],
+
       dueDate: taskData.dueDate || "",
 
-      // 🔵 ADMIN / PROJECT TOTAL
+      // 💰 PAYMENTS
       paymentAmount: taskData.paymentAmount || "0",
-
-      // 🟢 EMPLOYEE EARNING (NEW)
       yourProjectEarning: taskData.yourProjectEarning || "0",
 
+      // 📊 FLAGS
       paymentReceived: taskData.paymentReceived || false,
       caPaymentDone: taskData.caPaymentDone || false,
       sentToCA: taskData.sentToCA || false,
       gstApplied: taskData.gstApplied || false,
       paymentStatus: taskData.paymentStatus || "",
+
       taskStatus: taskData.taskStatus || "Pending",
       folderPath: taskData.folderPath || "",
-      createdAt: new Date(),
-    });
 
-    return NextResponse.json(newTask, { status: 201 });
+      createdAt: new Date(),
+    })
+
+    return NextResponse.json(newTask, { status: 201 })
   } catch (error) {
-    console.log("[v0] Error creating task:", error);
+    console.log("[v0] Error creating task:", error)
     return NextResponse.json(
       { error: "Failed to create task" },
       { status: 500 }
-    );
+    )
   }
 }
-

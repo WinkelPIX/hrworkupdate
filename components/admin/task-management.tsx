@@ -11,23 +11,25 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
   const [formData, setFormData] = useState({
     clientName: "",
     projectName: "",
+
+    assignmentType: "DIRECT", // ✅ ADD THIS
     employeeId: "",
+
     workGivenDate: "",
     dueDate: "",
     taskStatus: "Pending",
     paymentReceived: false,
 
-    paymentAmount: "", // ✅ TOTAL PROJECT AMOUNT (already there)
+    paymentAmount: "",
+    yourProjectEarning: "",
 
     paymentStatus: "",
     gstApplied: false,
     sentToCA: false,
     caPaymentDone: false,
     folderPath: "",
-
-    // ✅ ADD THIS ONLY
-    yourProjectEarning: "",
   })
+
 
 
   const [filters, setFilters] = useState({
@@ -152,7 +154,10 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
     setFormData({
       clientName: task.clientName,
       projectName: task.projectName,
-      employeeId: task.employeeId,
+
+      assignmentType: task.assignmentType || "DIRECT", // ✅ FIX
+
+      employeeId: task.employeeId || "",
       workGivenDate: task.workGivenDate,
       dueDate: task.dueDate,
       taskStatus: task.taskStatus,
@@ -163,8 +168,6 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
       sentToCA: task.sentToCA,
       caPaymentDone: task.caPaymentDone,
       folderPath: task.folderPath || "",
-
-      // ✅ ADD THIS
       yourProjectEarning: task.yourProjectEarning || "",
     })
 
@@ -174,15 +177,20 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
 
 
 
+
   const handleSubmitTask = async () => {
-    if (
-      !formData.clientName ||
-      !formData.projectName ||
-      !formData.employeeId ||
-      !formData.workGivenDate ||
-      !formData.dueDate
-    ) {
-      alert("Please fill all required fields")
+    if (!formData.clientName || !formData.projectName) {
+      alert("Client name and project name are required")
+      return
+    }
+
+    if (formData.assignmentType === "DIRECT" && !formData.employeeId) {
+      alert("Please select an employee for direct assignment")
+      return
+    }
+
+    if (!formData.workGivenDate || !formData.dueDate) {
+      alert("Work given date and due date are required")
       return
     }
 
@@ -200,34 +208,34 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
         await onRefresh()
         setShowForm(false)
         setEditingId(null)
+
         setFormData({
           clientName: "",
           projectName: "",
+          assignmentType: "DIRECT",
           employeeId: "",
           workGivenDate: "",
           dueDate: "",
           taskStatus: "Pending",
           paymentReceived: false,
-
-          paymentAmount: "",        // total project amount
-          yourProjectEarning: "",   // ✅ ADD THIS
-
+          paymentAmount: "",
+          yourProjectEarning: "",
           paymentStatus: "",
           gstApplied: false,
           sentToCA: false,
           caPaymentDone: false,
           folderPath: "",
         })
-
       } else {
         const error = await response.json()
         alert(`Failed to save task: ${error.error}`)
       }
     } catch (error) {
-      console.log("[v0] Error saving task:", error)
+      console.log("Error saving task:", error)
       alert("Error saving task")
     }
   }
+
 
   const filteredTasks = tasks.filter((task: any) => {
     if (filters.clientName && !task.clientName.toLowerCase().includes(filters.clientName.toLowerCase())) return false
@@ -282,7 +290,24 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
                 className="px-3 py-2 rounded-lg bg-input border border-border text-foreground"
               />
               <select
+                value={formData.assignmentType}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setFormData({
+                    ...formData,
+                    assignmentType: value,
+                    employeeId: value === "OPEN" ? "" : formData.employeeId,
+                  })
+                }}
+              >
+                <option value="DIRECT">Direct Assign</option>
+                <option value="OPEN">Open (Smart Take)</option>
+              </select>
+
+
+              <select
                 value={formData.employeeId}
+                disabled={formData.assignmentType === "OPEN"}
                 onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
                 className="px-3 py-2 rounded-lg bg-input border border-border text-foreground"
               >
@@ -391,14 +416,16 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
                     setFormData({
                       clientName: "",
                       projectName: "",
+                      assignmentType: "DIRECT", // ✅ REQUIRED
+
                       employeeId: "",
                       workGivenDate: "",
                       dueDate: "",
                       taskStatus: "Pending",
                       paymentReceived: false,
 
-                      paymentAmount: "",        // total project amount
-                      yourProjectEarning: "",   // ✅ ADD THIS
+                      paymentAmount: "",
+                      yourProjectEarning: "",
 
                       paymentStatus: "",
                       gstApplied: false,
@@ -406,6 +433,7 @@ export default function TaskManagement({ tasks, employees, onRefresh }: any) {
                       caPaymentDone: false,
                       folderPath: "",
                     })
+
 
                   }}
                   variant="outline"
