@@ -36,36 +36,58 @@ export default function TasksView({
   const [loading, setLoading] = useState(false)
   const [takingTaskId, setTakingTaskId] = useState<string | null>(null)
 
-  const safeTasks = Array.isArray(tasks) ? tasks : []
-
-  /* ===================== MONTH FILTER ===================== */
+  /* ===================== FILTER STATES ===================== */
 
   const now = new Date()
-  const [selectedMonth] = useState(
+  const [selectedMonth, setSelectedMonth] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   )
 
-  const monthlyTasks = useMemo(() => {
+  const [selectedStatus, setSelectedStatus] =
+    useState<"ALL" | Task["taskStatus"]>("ALL")
+
+  const safeTasks = Array.isArray(tasks) ? tasks : []
+
+  /* ===================== MONTH OPTIONS ===================== */
+
+  const monthOptions = useMemo(() => {
+    const set = new Set<string>()
+    safeTasks.forEach((t) => {
+      const d = new Date(t.workGivenDate)
+      set.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
+    })
+    return Array.from(set).sort((a, b) => (a < b ? 1 : -1))
+  }, [safeTasks])
+
+  /* ===================== APPLY FILTERS ===================== */
+
+  const filteredTasks = useMemo(() => {
     return safeTasks.filter((t) => {
       const d = new Date(t.workGivenDate)
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-      return key === selectedMonth
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+
+      const monthMatch = monthKey === selectedMonth
+      const statusMatch =
+        selectedStatus === "ALL" || t.taskStatus === selectedStatus
+
+      return monthMatch && statusMatch
     })
-  }, [safeTasks, selectedMonth])
+  }, [safeTasks, selectedMonth, selectedStatus])
 
   const sortedTasks = useMemo(() => {
-    return [...monthlyTasks].sort(
+    return [...filteredTasks].sort(
       (a, b) =>
         new Date(b.workGivenDate).getTime() -
         new Date(a.workGivenDate).getTime()
     )
-  }, [monthlyTasks])
+  }, [filteredTasks])
 
   /* ===================== COUNTS ===================== */
 
   const pendingTasks = sortedTasks.filter(
     (t) => t.taskStatus !== "Completed"
   )
+
   const completedTasks = sortedTasks.filter(
     (t) => t.taskStatus === "Completed"
   )
@@ -136,7 +158,36 @@ export default function TasksView({
   return (
     <div className="space-y-6">
 
-      {/* ✅ SUMMARY CARDS (ALL WORKING) */}
+      {/* ✅ FILTER CONTROLS (MONTH + STATUS) */}
+      <div className="flex flex-wrap gap-4">
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          className="border rounded px-3 py-2"
+        >
+          {monthOptions.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedStatus}
+          onChange={(e) =>
+            setSelectedStatus(e.target.value as any)
+          }
+          className="border rounded px-3 py-2"
+        >
+          <option value="ALL">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="On Hold">On Hold</option>
+        </select>
+      </div>
+
+      {/* ✅ SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
@@ -253,6 +304,7 @@ export default function TasksView({
                             }
                             className="w-full border rounded px-2 py-1 text-sm"
                           />
+
                           <input
                             type="text"
                             value={folderPath}
