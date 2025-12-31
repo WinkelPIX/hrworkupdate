@@ -172,18 +172,28 @@ export default function TasksView({
           ))}
         </select>
 
-        <select
+       <select
           value={selectedStatus}
           onChange={(e) =>
             setSelectedStatus(e.target.value as any)
           }
-          className="border rounded px-3 py-2"
+          className="border rounded px-3 py-2 bg-background text-foreground"
         >
-          <option value="ALL">All Status</option>
-          <option value="Pending">Pending</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-          <option value="On Hold">On Hold</option>
+          <option value="ALL" className="bg-background text-foreground">
+            All Status
+          </option>
+          <option value="Pending" className="bg-background text-foreground">
+            Pending
+          </option>
+          <option value="In Progress" className="bg-background text-foreground">
+            In Progress
+          </option>
+          <option value="Completed" className="bg-background text-foreground">
+            Completed
+          </option>
+          <option value="On Hold" className="bg-background text-foreground">
+            On Hold
+          </option>
         </select>
       </div>
 
