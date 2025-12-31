@@ -30,7 +30,7 @@ export default function TasksView({
   onRefresh,
   employeeType,
 }: TasksViewProps) {
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [workDoneDate, setWorkDoneDate] = useState("")
   const [folderPath, setFolderPath] = useState("")
   const [loading, setLoading] = useState(false)
@@ -41,53 +41,32 @@ export default function TasksView({
   /* ===================== MONTH FILTER ===================== */
 
   const now = new Date()
-  const [selectedMonth, setSelectedMonth] = useState(
+  const [selectedMonth] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   )
 
-  const monthOptions = useMemo(() => {
-    const set = new Set<string>()
-    safeTasks.forEach((t) => {
-      if (t.workGivenDate) {
-        const d = new Date(t.workGivenDate)
-        set.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
-      }
-    })
-    return Array.from(set).sort((a, b) => (a < b ? 1 : -1))
-  }, [safeTasks])
-
   const monthlyTasks = useMemo(() => {
     return safeTasks.filter((t) => {
-      if (!t.workGivenDate) return false
       const d = new Date(t.workGivenDate)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
       return key === selectedMonth
     })
   }, [safeTasks, selectedMonth])
 
-  /* ===================== STATUS FILTER ===================== */
-
-  const [selectedStatus, setSelectedStatus] =
-    useState<"ALL" | Task["taskStatus"]>("ALL")
-
-  const filteredTasks = useMemo(() => {
-    if (selectedStatus === "ALL") return monthlyTasks
-    return monthlyTasks.filter((t) => t.taskStatus === selectedStatus)
-  }, [monthlyTasks, selectedStatus])
-
-  const sortedTasks = [...filteredTasks].sort(
-    (a, b) =>
-      new Date(b.workGivenDate).getTime() -
-      new Date(a.workGivenDate).getTime()
-  )
+  const sortedTasks = useMemo(() => {
+    return [...monthlyTasks].sort(
+      (a, b) =>
+        new Date(b.workGivenDate).getTime() -
+        new Date(a.workGivenDate).getTime()
+    )
+  }, [monthlyTasks])
 
   /* ===================== COUNTS ===================== */
 
-  const pendingTasks = filteredTasks.filter(
+  const pendingTasks = sortedTasks.filter(
     (t) => t.taskStatus !== "Completed"
   )
-
-  const completedTasks = filteredTasks.filter(
+  const completedTasks = sortedTasks.filter(
     (t) => t.taskStatus === "Completed"
   )
 
@@ -102,12 +81,12 @@ export default function TasksView({
   }
 
   const totalCompletedAmount = completedTasks.reduce(
-    (sum, task) => sum + (showEarnings ? getEmployeeEarning(task) : 0),
+    (sum, t) => sum + (showEarnings ? getEmployeeEarning(t) : 0),
     0
   )
 
   const totalPendingAmount = pendingTasks.reduce(
-    (sum, task) => sum + (showEarnings ? getEmployeeEarning(task) : 0),
+    (sum, t) => sum + (showEarnings ? getEmployeeEarning(t) : 0),
     0
   )
 
@@ -115,12 +94,11 @@ export default function TasksView({
 
   const handleMarkComplete = async (taskId: string) => {
     if (!workDoneDate) {
-      alert("Please select a completion date")
+      alert("Please select completion date")
       return
     }
 
     setLoading(true)
-
     try {
       await fetch(`/api/tasks/${taskId}`, {
         method: "PUT",
@@ -133,37 +111,23 @@ export default function TasksView({
       })
 
       await onRefresh()
-      setSelectedTask(null)
+      setSelectedTaskId(null)
       setWorkDoneDate("")
       setFolderPath("")
-    } catch {
-      alert("Failed to update task")
     } finally {
       setLoading(false)
     }
   }
 
-  /* ===================== TAKE OPEN TASK ===================== */
-
   const handleTakeTask = async (taskId: string) => {
     setTakingTaskId(taskId)
-
     try {
-      const res = await fetch("/api/tasks/take", {
+      await fetch("/api/tasks/take", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ taskId }),
       })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        alert(data.error || "Task already taken")
-      } else {
-        await onRefresh()
-      }
-    } catch {
-      alert("Failed to take task")
+      await onRefresh()
     } finally {
       setTakingTaskId(null)
     }
@@ -172,7 +136,7 @@ export default function TasksView({
   return (
     <div className="space-y-6">
 
-      {/* 📊 Summary Cards */}
+      {/* ✅ SUMMARY CARDS (ALL WORKING) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
@@ -180,8 +144,8 @@ export default function TasksView({
               Total (Filtered)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{filteredTasks.length}</p>
+          <CardContent className="text-3xl font-bold">
+            {sortedTasks.length}
           </CardContent>
         </Card>
 
@@ -191,10 +155,8 @@ export default function TasksView({
               Pending
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-yellow-400">
-              {pendingTasks.length}
-            </p>
+          <CardContent className="text-3xl font-bold text-yellow-400">
+            {pendingTasks.length}
           </CardContent>
         </Card>
 
@@ -204,10 +166,8 @@ export default function TasksView({
               Completed
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-green-400">
-              {completedTasks.length}
-            </p>
+          <CardContent className="text-3xl font-bold text-green-400">
+            {completedTasks.length}
           </CardContent>
         </Card>
 
@@ -219,10 +179,8 @@ export default function TasksView({
                   Completed Amount
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-green-400">
-                  ₹{totalCompletedAmount.toLocaleString()}
-                </p>
+              <CardContent className="text-3xl font-bold text-green-400">
+                ₹{totalCompletedAmount.toLocaleString()}
               </CardContent>
             </Card>
 
@@ -232,87 +190,125 @@ export default function TasksView({
                   Pending Amount
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-yellow-400">
-                  ₹{totalPendingAmount.toLocaleString()}
-                </p>
+              <CardContent className="text-3xl font-bold text-yellow-400">
+                ₹{totalPendingAmount.toLocaleString()}
               </CardContent>
             </Card>
           </>
         )}
       </div>
 
-      {/* 📋 Task Table */}
+      {/* ✅ TASK TABLE WITH INLINE COMPLETE */}
       <Card>
         <CardHeader>
           <CardTitle>Task List</CardTitle>
         </CardHeader>
+
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <tbody>
-                {sortedTasks.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="text-center py-8 text-muted-foreground">
-                      No tasks found
+                {sortedTasks.map((task) => (
+                  <tr key={task._id} className="border-b align-top">
+                    <td className="py-3 px-4">{task.clientName}</td>
+                    <td className="py-3 px-4">{task.projectName}</td>
+
+                    {showEarnings && (
+                      <td className="py-3 px-4">
+                        ₹{getEmployeeEarning(task)}
+                      </td>
+                    )}
+
+                    <td className="py-3 px-4">
+                      {new Date(task.workGivenDate).toLocaleDateString()}
+                    </td>
+
+                    <td className="py-3 px-4">
+                      {new Date(task.dueDate).toLocaleDateString()}
+                    </td>
+
+                    <td className="py-3 px-4 text-xs">
+                      {task.taskStatus}
+                    </td>
+
+                    <td className="py-3 px-4 text-center w-[260px]">
+                      {task.assignmentType === "OPEN" &&
+                      employeeType === "PROJECT_BASED" ? (
+                        <Button
+                          size="sm"
+                          disabled={takingTaskId === task._id}
+                          onClick={() => handleTakeTask(task._id)}
+                        >
+                          {takingTaskId === task._id
+                            ? "Taking..."
+                            : "Take Task"}
+                        </Button>
+                      ) : selectedTaskId === task._id ? (
+                        <div className="space-y-2">
+                          <input
+                            type="date"
+                            value={workDoneDate}
+                            onChange={(e) =>
+                              setWorkDoneDate(e.target.value)
+                            }
+                            className="w-full border rounded px-2 py-1 text-sm"
+                          />
+                          <input
+                            type="text"
+                            value={folderPath}
+                            onChange={(e) =>
+                              setFolderPath(e.target.value)
+                            }
+                            placeholder="Folder path"
+                            className="w-full border rounded px-2 py-1 text-sm"
+                          />
+
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              disabled={loading}
+                              onClick={() =>
+                                handleMarkComplete(task._id)
+                              }
+                              className="flex-1 bg-green-600 text-white"
+                            >
+                              <Check className="h-3 w-3 mr-1" />
+                              Save
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedTaskId(null)
+                                setWorkDoneDate("")
+                                setFolderPath("")
+                              }}
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : task.taskStatus !== "Completed" ? (
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setSelectedTaskId(task._id)
+                            setWorkDoneDate("")
+                            setFolderPath(task.folderPath || "")
+                          }}
+                        >
+                          Complete
+                        </Button>
+                      ) : (
+                        <span className="text-green-500 text-xs">
+                          Completed
+                        </span>
+                      )}
                     </td>
                   </tr>
-                ) : (
-                  sortedTasks.map((task) => (
-                    <tr key={task._id} className="border-b">
-                      <td className="py-3 px-4">{task.clientName}</td>
-                      <td className="py-3 px-4">{task.projectName}</td>
-
-                      {showEarnings && (
-                        <td className="py-3 px-4">
-                          ₹{getEmployeeEarning(task)}
-                        </td>
-                      )}
-
-                      <td className="py-3 px-4">
-                        {new Date(task.workGivenDate).toLocaleDateString()}
-                      </td>
-
-                      <td className="py-3 px-4">
-                        {new Date(task.dueDate).toLocaleDateString()}
-                      </td>
-
-                      <td className="py-3 px-4 text-xs">
-                        {task.taskStatus}
-                      </td>
-
-                      <td className="py-3 px-4 text-center">
-                        {task.assignmentType === "OPEN" &&
-                        employeeType === "PROJECT_BASED" ? (
-                          <Button
-                            size="sm"
-                            disabled={takingTaskId === task._id}
-                            onClick={() => handleTakeTask(task._id)}
-                          >
-                            {takingTaskId === task._id
-                              ? "Taking..."
-                              : "Take Task"}
-                          </Button>
-                        ) : task.taskStatus !== "Completed" ? (
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setSelectedTask(task)
-                              setWorkDoneDate("")
-                              setFolderPath(task.folderPath || "")
-                            }}
-                          >
-                            Complete
-                          </Button>
-                        ) : (
-                          <span className="text-green-500 text-xs">
-                            Completed
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
