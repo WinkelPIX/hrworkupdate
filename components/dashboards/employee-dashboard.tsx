@@ -5,16 +5,18 @@ import { Button } from "@/components/ui/button"
 import EmployeeHeader from "@/components/employee/employee-header"
 import TasksView from "@/components/employee/tasks-view"
 import PerformanceAnalytics from "@/components/employee/performance-analytics"
-import AttendanceView from "@/components/employee/attendance-view" // ✅ ADDED
+import AttendanceView from "@/components/employee/attendance-view"
 import AvailableTasks from "@/components/employee/available-tasks"
+import EmployeeProfileForm from "@/components/employee/employee-profile-form"
+
 export default function EmployeeDashboard({ user, setUser }: any) {
   const [activeTab, setActiveTab] = useState<
-    "tasks" | "available" | "attendance" | "performance"
+    "profile" | "tasks" | "available" | "attendance" | "performance"
   >("tasks")
 
+  const [tasks, setTasks] = useState<any[]>([])
 
-  const [tasks, setTasks] = useState([])
-
+  /* ================= TASK FETCH ================= */
   useEffect(() => {
     fetchTasks()
     const interval = setInterval(fetchTasks, 5000)
@@ -32,6 +34,7 @@ export default function EmployeeDashboard({ user, setUser }: any) {
     }
   }
 
+  /* ================= LOGOUT ================= */
   const handleLogout = async () => {
     await fetch("/api/auth/logout", {
       method: "POST",
@@ -46,7 +49,18 @@ export default function EmployeeDashboard({ user, setUser }: any) {
 
       <main className="container mx-auto py-8 px-4">
         {/* 🔹 Tabs */}
-        <div className="mb-6 flex gap-2 border-b pb-4">
+        <div className="mb-6 flex gap-2 border-b pb-4 flex-wrap">
+
+          <Button
+            onClick={() => setActiveTab("profile")}
+            className={
+              activeTab === "profile"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card"
+            }
+          >
+            Profile
+          </Button>
 
           <Button
             onClick={() => setActiveTab("tasks")}
@@ -58,6 +72,7 @@ export default function EmployeeDashboard({ user, setUser }: any) {
           >
             My Tasks
           </Button>
+
           {user.salaryType === "PROJECT_BASED" && (
             <Button
               onClick={() => setActiveTab("available")}
@@ -70,7 +85,6 @@ export default function EmployeeDashboard({ user, setUser }: any) {
               Available Tasks
             </Button>
           )}
-
 
           <Button
             onClick={() => setActiveTab("attendance")}
@@ -93,10 +107,13 @@ export default function EmployeeDashboard({ user, setUser }: any) {
           >
             Performance
           </Button>
-
         </div>
 
         {/* 🔹 Content */}
+        {activeTab === "profile" && (
+          <EmployeeProfileForm user={user} />
+        )}
+
         {activeTab === "tasks" && (
           <TasksView
             tasks={tasks}
@@ -112,12 +129,14 @@ export default function EmployeeDashboard({ user, setUser }: any) {
         {activeTab === "performance" && (
           <PerformanceAnalytics employeeId={user.username} />
         )}
-        {activeTab === "available" && user.salaryType === "PROJECT_BASED" && (
-          <AvailableTasks
-            employeeId={user.username}
-            onTaken={fetchTasks}
-          />
-        )}
+
+        {activeTab === "available" &&
+          user.salaryType === "PROJECT_BASED" && (
+            <AvailableTasks
+              employeeId={user.username}
+              onTaken={fetchTasks}
+            />
+          )}
       </main>
     </div>
   )
