@@ -103,8 +103,7 @@ export default function TasksView({
 
   /* ===================== EARNINGS ===================== */
 
-  const showEarnings =
-    employeeType?.toUpperCase().replace(/\s/g, "_") === "PROJECT_BASED"
+  const showEarnings = employeeType === "PROJECT_BASED"
 
   const getEmployeeEarning = (task: Task) => {
     const val = Number(task.yourProjectEarning)
@@ -167,7 +166,7 @@ export default function TasksView({
   return (
     <div className="space-y-6">
 
-      {/* ✅ FILTERS */}
+      {/* ================= FILTERS ================= */}
       <div className="flex flex-wrap gap-4">
         <select
           value={selectedMonth}
@@ -176,17 +175,13 @@ export default function TasksView({
         >
           <option value="ALL">All Months</option>
           {monthOptions.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
+            <option key={m} value={m}>{m}</option>
           ))}
         </select>
 
         <select
           value={selectedStatus}
-          onChange={(e) =>
-            setSelectedStatus(e.target.value as any)
-          }
+          onChange={(e) => setSelectedStatus(e.target.value as any)}
           className="border rounded px-3 py-2 bg-background text-foreground"
         >
           <option value="ALL">All Status</option>
@@ -197,30 +192,22 @@ export default function TasksView({
         </select>
       </div>
 
-      {/* ✅ SUMMARY */}
+      {/* ================= SUMMARY ================= */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Total (Filtered)</CardTitle>
-          </CardHeader>
-          <CardContent className="text-3xl font-bold">
-            {sortedTasks.length}
-          </CardContent>
+          <CardHeader><CardTitle>Total (Filtered)</CardTitle></CardHeader>
+          <CardContent className="text-3xl font-bold">{sortedTasks.length}</CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Pending</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Pending</CardTitle></CardHeader>
           <CardContent className="text-3xl font-bold text-yellow-400">
             {pendingTasks.length}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Completed</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Completed</CardTitle></CardHeader>
           <CardContent className="text-3xl font-bold text-green-400">
             {completedTasks.length}
           </CardContent>
@@ -229,18 +216,14 @@ export default function TasksView({
         {showEarnings && (
           <>
             <Card>
-              <CardHeader>
-                <CardTitle>Completed Amount</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Completed Amount</CardTitle></CardHeader>
               <CardContent className="text-3xl font-bold text-green-400">
                 ₹{totalCompletedAmount.toLocaleString()}
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Pending Amount</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Pending Amount</CardTitle></CardHeader>
               <CardContent className="text-3xl font-bold text-yellow-400">
                 ₹{totalPendingAmount.toLocaleString()}
               </CardContent>
@@ -249,67 +232,93 @@ export default function TasksView({
         )}
       </div>
 
-      {/* ✅ TASK LIST */}
+      {/* ================= TASK LIST ================= */}
       <Card>
-        <CardHeader>
-          <CardTitle>Task List</CardTitle>
-        </CardHeader>
-
+        <CardHeader><CardTitle>Task List</CardTitle></CardHeader>
         <CardContent>
-          {sortedTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No tasks found for selected filters.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <tbody>
-                  {sortedTasks.map((task) => (
-                    <tr key={task._id} className="border-b">
-                      <td className="py-3 px-4">{task.clientName}</td>
-                      <td className="py-3 px-4">{task.projectName}</td>
+          <table className="w-full">
+            <tbody>
+              {sortedTasks.map((task) => (
+                <tr key={task._id} className="border-b align-top">
+                  <td className="p-3">{task.clientName}</td>
+                  <td className="p-3">{task.projectName}</td>
 
-                      {showEarnings && (
-                        <td className="py-3 px-4">
-                          ₹{getEmployeeEarning(task)}
-                        </td>
-                      )}
+                  {showEarnings && (
+                    <td className="p-3">₹{getEmployeeEarning(task)}</td>
+                  )}
 
-                      <td className="py-3 px-4">
-                        {new Date(task.workGivenDate).toLocaleDateString()}
-                      </td>
+                  <td className="p-3 text-xs">{task.taskStatus}</td>
 
-                      <td className="py-3 px-4">
-                        {new Date(task.dueDate).toLocaleDateString()}
-                      </td>
+                  <td className="p-3 w-[280px]">
+                    {task.assignmentType === "OPEN" &&
+                    employeeType === "PROJECT_BASED" ? (
+                      <Button
+                        size="sm"
+                        disabled={takingTaskId === task._id}
+                        onClick={() => handleTakeTask(task._id)}
+                      >
+                        {takingTaskId === task._id ? "Taking..." : "Take Task"}
+                      </Button>
+                    ) : selectedTaskId === task._id ? (
+                      <div className="space-y-2">
+                        <input
+                          type="date"
+                          value={workDoneDate}
+                          onChange={(e) => setWorkDoneDate(e.target.value)}
+                          className="w-full border rounded px-2 py-1 text-sm"
+                        />
 
-                      <td className="py-3 px-4 text-xs">
-                        {task.taskStatus}
-                      </td>
+                        <input
+                          type="text"
+                          value={folderPath}
+                          onChange={(e) => setFolderPath(e.target.value)}
+                          placeholder="Folder path"
+                          className="w-full border rounded px-2 py-1 text-sm"
+                        />
 
-                      <td className="py-3 px-4">
-                        {task.taskStatus === "Completed" ? (
-                          <span className="text-green-500 text-xs">
-                            Completed
-                          </span>
-                        ) : (
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
-                            onClick={() => {
-                              setSelectedTaskId(task._id)
-                              setFolderPath(task.folderPath || "")
-                            }}
+                            disabled={loading}
+                            onClick={() => handleMarkComplete(task._id)}
+                            className="flex-1 bg-green-600 text-white"
                           >
-                            Complete
+                            <Check className="h-3 w-3 mr-1" />
+                            Save
                           </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedTaskId(null)
+                              setWorkDoneDate("")
+                              setFolderPath("")
+                            }}
+                            className="flex-1"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : task.taskStatus !== "Completed" ? (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedTaskId(task._id)
+                          setFolderPath(task.folderPath || "")
+                        }}
+                      >
+                        Complete
+                      </Button>
+                    ) : (
+                      <span className="text-green-500 text-xs">Completed</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </CardContent>
       </Card>
     </div>
