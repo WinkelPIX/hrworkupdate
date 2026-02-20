@@ -8,10 +8,13 @@ import PerformanceAnalytics from "@/components/employee/performance-analytics"
 import AttendanceView from "@/components/employee/attendance-view"
 import AvailableTasks from "@/components/employee/available-tasks"
 import EmployeeProfileForm from "@/components/employee/employee-profile-form"
+// Import the new component
+import NoticePeriodForm from "@/components/employee/notice-period-form"
 
 export default function EmployeeDashboard({ user, setUser }: any) {
+  // 🔹 Added "resignation" to the type
   const [activeTab, setActiveTab] = useState<
-    "profile" | "tasks" | "available" | "attendance" | "performance"
+    "profile" | "tasks" | "available" | "attendance" | "performance" | "resignation"
   >("tasks")
 
   const [tasks, setTasks] = useState<any[]>([])
@@ -50,25 +53,16 @@ export default function EmployeeDashboard({ user, setUser }: any) {
       <main className="container mx-auto py-8 px-4">
         {/* 🔹 Tabs */}
         <div className="mb-6 flex gap-2 border-b pb-4 flex-wrap">
-
           <Button
             onClick={() => setActiveTab("profile")}
-            className={
-              activeTab === "profile"
-                ? "bg-primary text-primary-foreground"
-                : "bg-card"
-            }
+            className={activeTab === "profile" ? "bg-primary text-primary-foreground" : "bg-card"}
           >
             Profile
           </Button>
 
           <Button
             onClick={() => setActiveTab("tasks")}
-            className={
-              activeTab === "tasks"
-                ? "bg-primary text-primary-foreground"
-                : "bg-card"
-            }
+            className={activeTab === "tasks" ? "bg-primary text-primary-foreground" : "bg-card"}
           >
             My Tasks
           </Button>
@@ -76,11 +70,7 @@ export default function EmployeeDashboard({ user, setUser }: any) {
           {user.salaryType === "PROJECT_BASED" && (
             <Button
               onClick={() => setActiveTab("available")}
-              className={
-                activeTab === "available"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card"
-              }
+              className={activeTab === "available" ? "bg-primary text-primary-foreground" : "bg-card"}
             >
               Available Tasks
             </Button>
@@ -88,31 +78,29 @@ export default function EmployeeDashboard({ user, setUser }: any) {
 
           <Button
             onClick={() => setActiveTab("attendance")}
-            className={
-              activeTab === "attendance"
-                ? "bg-primary text-primary-foreground"
-                : "bg-card"
-            }
+            className={activeTab === "attendance" ? "bg-primary text-primary-foreground" : "bg-card"}
           >
             Attendance
           </Button>
 
           <Button
             onClick={() => setActiveTab("performance")}
-            className={
-              activeTab === "performance"
-                ? "bg-primary text-primary-foreground"
-                : "bg-card"
-            }
+            className={activeTab === "performance" ? "bg-primary text-primary-foreground" : "bg-card"}
           >
             Performance
+          </Button>
+
+          {/* 🔹 New Resignation Tab Button */}
+          <Button
+            onClick={() => setActiveTab("resignation")}
+            className={activeTab === "resignation" ? "bg-destructive text-destructive-foreground" : "bg-card hover:text-destructive"}
+          >
+            Resignation
           </Button>
         </div>
 
         {/* 🔹 Content */}
-        {activeTab === "profile" && (
-          <EmployeeProfileForm user={user} />
-        )}
+        {activeTab === "profile" && <EmployeeProfileForm user={user} />}
 
         {activeTab === "tasks" && (
           <TasksView
@@ -122,21 +110,18 @@ export default function EmployeeDashboard({ user, setUser }: any) {
           />
         )}
 
-        {activeTab === "attendance" && (
-          <AttendanceView employeeId={user.username} />
+        {activeTab === "attendance" && <AttendanceView employeeId={user.username} />}
+
+        {activeTab === "performance" && <PerformanceAnalytics employeeId={user.username} />}
+
+        {activeTab === "available" && user.salaryType === "PROJECT_BASED" && (
+          <AvailableTasks employeeId={user.username} onTaken={fetchTasks} />
         )}
 
-        {activeTab === "performance" && (
-          <PerformanceAnalytics employeeId={user.username} />
+        {/* 🔹 New Notice Period Form Section */}
+        {activeTab === "resignation" && (
+          <NoticePeriodForm user={user} />
         )}
-
-        {activeTab === "available" &&
-          user.salaryType === "PROJECT_BASED" && (
-            <AvailableTasks
-              employeeId={user.username}
-              onTaken={fetchTasks}
-            />
-          )}
       </main>
     </div>
   )

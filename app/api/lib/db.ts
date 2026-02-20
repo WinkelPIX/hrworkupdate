@@ -218,4 +218,53 @@ export const db = {
         .toArray()
     },
   },
+  /* ===================== 👋 RESIGNATIONS ===================== */
+  resignations: {
+    create: async (data: any) => {
+      const database = await mongoClient()
+      const payload = {
+        ...data,
+        status: "PENDING", // PENDING, APPROVED, REJECTED
+        createdAt: new Date(),
+      }
+      await database.collection("resignations").insertOne(payload)
+      return payload
+    },
+
+    findByUsername: async (username: string) => {
+      const database = await mongoClient()
+      return database
+        .collection("resignations")
+        .find({ username })
+        .sort({ createdAt: -1 })
+        .toArray()
+    },
+
+    getAll: async () => {
+      const database = await mongoClient()
+      return database
+        .collection("resignations")
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray()
+    },
+
+    /* Inside your db.ts -> resignations object */
+    /* Inside db.ts -> resignations */
+    updateStatus: async (id: string, status: string) => {
+      try {
+        const database = await mongoClient();
+        const result = await database
+          .collection("resignations")
+          .updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { status: status } }
+          );
+        return result.modifiedCount > 0;
+      } catch (err) {
+        console.error("DB_UPDATE_ERROR:", err);
+        return false;
+      }
+    },
+  },
 }
