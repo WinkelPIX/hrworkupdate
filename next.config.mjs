@@ -8,6 +8,9 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+    outputFileTracingIncludes: {
+      "/api/invoice": ["./node_modules/@sparticuz/chromium/bin/**/*"],
+    },
   },
 }
 
