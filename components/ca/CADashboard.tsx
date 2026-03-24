@@ -49,6 +49,8 @@ export default function CADashboard({ user, setUser }: any) {
   // New State for Invoice Generation
   const [invoicePreview, setInvoicePreview] = useState<any>(null)
   const [generating, setGenerating] = useState(false) // Loading state for PDF
+  const [autoFilling, setAutoFilling] = useState(false) // Loading state for auto-fill
+  const [autoFilled, setAutoFilled] = useState(false)  // Whether address was auto-filled
   const [invoiceForm, setInvoiceForm] = useState({
     invoiceNumber: "",
     clientAddress: "",
@@ -164,20 +166,18 @@ export default function CADashboard({ user, setUser }: any) {
     return sum + amt
   }, 0)
 
-  // 1. Prepare the Preview
-  const handleGeneratePreview = () => {
+  // 1. Prepare the Preview + Auto-fill from past invoices
+  const handleGeneratePreview = async () => {
     if (selectedTasksData.length === 0) return
     
-    // Auto-generate a random Invoice Number for convenience
     const randomInv = `INV-${Math.floor(1000 + Math.random() * 9000)}`
-    
-    // Reset form with new details
-    setInvoiceForm({
-        invoiceNumber: randomInv,
-        clientAddress: "",
-        clientGST: "",
-        extraNotes: ""
-    })
+    const clientName = selectedTasksData[0]?.clientName || ""
+    const hasGst = selectedTasksData.some((t) => t.gstApplied)
+
+    // Reset form & state
+    setAutoFilled(false)
+    setAutoFilling(true)
+    setInvoiceForm({ invoiceNumber: randomInv, clientAddress: "", clientGST: "", extraNotes: "" })
 
     const invoiceData = {
       invoiceDate: new Date().toISOString(),
@@ -193,6 +193,27 @@ export default function CADashboard({ user, setUser }: any) {
       grandTotal: totalAmount,
     }
     setInvoicePreview(invoiceData)
+
+    // Auto-fill address & GST from past invoices for this client
+    try {
+      const res = await fetch(`/api/invoice/client?name=${encodeURIComponent(clientName)}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.found && data.clientAddress) {
+          setInvoiceForm({
+            invoiceNumber: randomInv,
+            clientAddress: data.clientAddress || "",
+            clientGST: hasGst ? (data.clientGST || "") : "",
+            extraNotes: ""
+          })
+          setAutoFilled(true)
+        }
+      }
+    } catch {
+      // Silently fail — user can still fill manually
+    } finally {
+      setAutoFilling(false)
+    }
   }
 
   // 2. EXECUTABLE FUNCTION: Call API and Download PDF
@@ -508,12 +529,16 @@ export default function CADashboard({ user, setUser }: any) {
                         />
                     </div>
                     <div className="col-span-2">
-                        <label className="text-[10px] font-bold uppercase text-gray-500">Client Address (Required)</label>
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-bold uppercase text-gray-500">Client Address (Required)</label>
+                          {autoFilling && <span className="text-[9px] text-blue-500 animate-pulse">Looking up history...</span>}
+                          {!autoFilling && autoFilled && <span className="text-[9px] text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded">✓ Auto-filled</span>}
+                        </div>
                         <Textarea 
-                            className="min-h-[60px] text-xs bg-gray-50 border-gray-300 text-black mt-1" 
+                            className={`min-h-[60px] text-xs bg-gray-50 border-gray-300 text-black mt-1 ${autoFilling ? 'animate-pulse bg-blue-50' : ''}`}
                             placeholder="Full Billing Address"
                             value={invoiceForm.clientAddress}
-                            onChange={(e) => setInvoiceForm({...invoiceForm, clientAddress: e.target.value})}
+                            onChange={(e) => { setAutoFilled(false); setInvoiceForm({...invoiceForm, clientAddress: e.target.value}) }}
                         />
                     </div>
                     <div>

@@ -142,6 +142,16 @@ export const db = {
       return database.collection("invoices").find().toArray()
     },
 
+    getByClientName: async (clientName: string) => {
+      const database = await mongoClient()
+      return database
+        .collection("invoices")
+        .findOne(
+          { clientName: { $regex: new RegExp(`^${clientName}$`, "i") } },
+          { sort: { createdAt: -1 } } // Most recent invoice first
+        )
+    },
+
     update: async (id: string, data: any) => {
       const database = await mongoClient()
       await database
