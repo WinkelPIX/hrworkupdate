@@ -1,0 +1,25 @@
+name: Build and Push to ACR
+on:
+  workflow_dispatch:
+    inputs:
+      imageTag:
+        description: 'Image tag to build'
+        required: true
+      acrName:
+        description: 'ACR Name'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/docker-login@v1
+        with:
+          login-server: ${{ github.event.inputs.acrName }}.azurecr.io
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
+      - name: Build and Push
+        run: |
+          docker build -t ${{ github.event.inputs.acrName }}.azurecr.io/${{ github.event.inputs.imageTag }} .
+          docker push ${{ github.event.inputs.acrName }}.azurecr.io/${{ github.event.inputs.imageTag }}
